@@ -2,6 +2,7 @@ import { getChapter } from '@/services/bibleService'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import InteractiveVerse from '@/components/bible/InteractiveVerse'
+import ChapterComplete from '@/components/gamification/ChapterComplete'
 
 export const dynamic = 'force-dynamic'
 
@@ -57,6 +58,13 @@ export default async function ChapterPage({ params }: PageProps) {
                     />
                 ))}
             </div>
+
+            {/* ÁREA DE GAMIFICAÇÃO */}
+            <ChapterComplete
+                bookSlug={book}
+                chapter={parseInt(chapter)}
+                nextUrl={data.next ? `/app/leitura/${data.next.bookSlug}/${data.next.chapter}` : null}
+            />
 
             {/* Botão Próximo Gigante */}
             {data.next && (
