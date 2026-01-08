@@ -1,6 +1,7 @@
 import { getChapter } from '@/services/bibleService'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import InteractiveVerse from '@/components/bible/InteractiveVerse'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,16 +47,14 @@ export default async function ChapterPage({ params }: PageProps) {
             </div>
 
             {/* Texto Bíblico */}
-            <div className="space-y-4">
+            <div className="space-y-1"> {/* Reduzi o espaçamento vertical pois o componente já tem margem */}
                 {data.verses.map((verse) => (
-                    <div key={verse.id} className="group relative">
-                        <p className="text-lg md:text-xl font-serif leading-relaxed text-stone-700">
-                            <span className="text-xs font-sans text-stone-400 font-bold mr-2 select-none align-top mt-1 inline-block">
-                                {verse.verse}
-                            </span>
-                            {verse.text}
-                        </p>
-                    </div>
+                    // Substituímos a div manual pelo componente
+                    <InteractiveVerse
+                        key={verse.id}
+                        text={verse.text}
+                        verseNumber={verse.verse}
+                    />
                 ))}
             </div>
 

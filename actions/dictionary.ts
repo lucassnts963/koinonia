@@ -1,5 +1,6 @@
 'use server'
 
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { supabase } from '@/lib/supabaseClient'
 import OpenAI from 'openai'
 
@@ -47,7 +48,8 @@ export async function getDefinition(term: string, language: string = 'pt-BR') {
         const definition = aiResponse.choices[0].message.content
 
         // 3. Salva no banco para o futuro (Memoization)
-        const { data: newEntry, error } = await supabase
+
+        const { data: newEntry, error } = await supabaseAdmin
             .from('dictionary_entries')
             .insert({
                 term: term, // Capitalize se quiser padronizar
