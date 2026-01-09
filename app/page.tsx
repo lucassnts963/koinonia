@@ -1,108 +1,149 @@
 import Link from 'next/link'
-import { BookOpen, Map, Users, Heart, ArrowRight, Anchor } from 'lucide-react'
+import { BookOpen, Map, Users, Heart, ArrowRight, Network, Scroll, Compass } from 'lucide-react'
+import KoinoniaLogo from '@/components/brand/KoinoniaLogo'
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#F5F5F0] text-stone-900 font-sans selection:bg-indigo-100">
+    <div className="min-h-screen bg-stone-50 text-stone-900 font-sans selection:bg-amber-100">
 
       {/* Navbar Minimalista */}
-      <nav className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
-        <div className="text-2xl font-serif font-black text-indigo-950 flex items-center gap-2">
-          <Anchor className="text-amber-600 w-6 h-6" />
-          KOINONIA
+      <nav className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center relative z-20">
+        <div className="flex items-center gap-3">
+          <KoinoniaLogo className="w-8 h-8 text-amber-600" />
+          <div>
+            <span className="text-xl font-serif font-bold text-stone-900 tracking-tight block leading-none">KOINONIA</span>
+            <span className="text-[10px] font-bold text-stone-400 uppercase tracking-[0.3em]">Discipulado</span>
+          </div>
         </div>
-        <div className="hidden md:flex gap-8 text-sm font-semibold text-stone-600">
-          <a href="#proposito" className="hover:text-indigo-900 transition-colors">Propósito</a>
-          <a href="#metodo" className="hover:text-indigo-900 transition-colors">O Método</a>
-          <Link href="/transparencia" className="hover:text-indigo-900 transition-colors">Transparência</Link>
+
+        <div className="hidden md:flex gap-8 text-sm font-semibold text-stone-500">
+          <a href="#proposito" className="hover:text-amber-700 transition-colors">Propósito</a>
+          <a href="#funcionalidades" className="hover:text-amber-700 transition-colors">Ferramentas</a>
+          <Link href="/transparencia" className="hover:text-amber-700 transition-colors">Transparência</Link>
         </div>
+
         <div className="flex gap-4">
           <Link
             href="/login"
-            className="px-5 py-2.5 rounded-full bg-indigo-950 text-white font-bold text-sm hover:bg-indigo-900 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+            className="px-6 py-2.5 rounded-xl bg-stone-900 text-white font-bold text-sm hover:bg-black transition-all shadow-lg shadow-stone-900/10 hover:shadow-xl hover:-translate-y-0.5"
           >
-            Entrar na Tribo
+            Acessar Tenda
           </Link>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <header className="max-w-5xl mx-auto px-6 pt-20 pb-32 text-center">
-        <div className="inline-block mb-4 px-4 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold tracking-widest uppercase">
-          Discipulado Gamificado
+      <header className="max-w-6xl mx-auto px-6 pt-16 md:pt-24 pb-32 text-center relative">
+        {/* Background Decorativo */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-b from-amber-50/50 to-transparent -z-10 rounded-full blur-3xl opacity-60"></div>
+
+        <div className="inline-flex items-center gap-2 mb-6 px-4 py-1.5 bg-white border border-stone-200 text-stone-600 rounded-full text-xs font-bold tracking-widest uppercase shadow-sm">
+          <Compass size={14} className="text-amber-600" />
+          Uma Nova Jornada
         </div>
-        <h1 className="text-5xl md:text-7xl font-serif font-bold text-indigo-950 mb-8 leading-tight">
-          A Bíblia não é apenas um livro.<br />
-          <span className="text-amber-600 relative">
-            É uma Jornada Viva.
-            <svg className="absolute w-full h-3 -bottom-1 left-0 text-amber-200 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
-              <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
-            </svg>
+
+        <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif font-black text-stone-900 mb-8 leading-[0.95] tracking-tight">
+          A Bíblia Viva,<br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-800 relative">
+            Conectada.
           </span>
         </h1>
-        <p className="text-xl md:text-2xl text-stone-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-          Redescubra as Escrituras através de um sistema que une a profundidade teológica com o engajamento moderno.
+
+        <p className="text-xl md:text-2xl text-stone-500 max-w-2xl mx-auto mb-12 leading-relaxed font-light">
+          Uma plataforma de estudos que une a <strong className="text-stone-700 font-medium">profundidade teológica</strong> com a tecnologia de grafos e gamificação reverente.
         </p>
 
         <div className="flex flex-col md:flex-row justify-center items-center gap-4">
           <Link
             href="/login"
-            className="px-8 py-4 bg-indigo-600 text-white rounded-xl font-bold text-lg flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200"
+            className="px-8 py-4 bg-amber-600 text-white rounded-2xl font-bold text-lg flex items-center gap-2 hover:bg-amber-700 transition-all shadow-xl shadow-amber-600/20 group"
           >
-            Iniciar Minha Peregrinação <ArrowRight size={20} />
+            Iniciar Minha Peregrinação
+            <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           </Link>
           <a
-            href="#como-funciona"
-            className="px-8 py-4 bg-white text-stone-600 border border-stone-200 rounded-xl font-bold text-lg hover:bg-stone-50 transition-all"
+            href="#funcionalidades"
+            className="px-8 py-4 bg-white text-stone-600 border border-stone-200 rounded-2xl font-bold text-lg hover:bg-stone-50 transition-all hover:border-stone-300"
           >
-            Como funciona?
+            Conhecer o Método
           </a>
         </div>
       </header>
 
       {/* Features Grid */}
-      <section className="bg-white py-20 border-t border-stone-100">
+      <section id="funcionalidades" className="bg-white py-24 border-t border-stone-100">
         <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-serif font-bold text-stone-900 mb-4">Ferramentas para o Reino</h2>
+            <p className="text-stone-500 max-w-2xl mx-auto">Tudo que você precisa para aprofundar seu relacionamento com as Escrituras.</p>
+          </div>
+
           <div className="grid md:grid-cols-3 gap-8">
             <FeatureCard
+              icon={Network}
+              title="A Teia (Grafo)"
+              description="Visualize as conexões entre versículos, temas e seus estudos pessoais. Veja como o Antigo Testamento aponta para o Novo em um mapa vivo."
+            />
+            <FeatureCard
               icon={Map}
-              title="A Teia do Conhecimento"
-              description="Visualize conexões profundas entre Antigo e Novo Testamento. Veja como profecias se cumprem visualmente."
+              title="Jornada Gamificada"
+              description="Um plano de leitura anual visual. Acompanhe seu progresso dia a dia em um mapa estilo 'Duolingo', mas focado exclusivamente na Bíblia."
             />
             <FeatureCard
-              icon={Users}
-              title="Tribos & Discipulado"
-              description="Não caminhe sozinho. Junte-se a uma tribo, tenha mentores e acompanhe o crescimento espiritual de seus discípulos."
-            />
-            <FeatureCard
-              icon={BookOpen}
-              title="Leitura Híbrida Inteligente"
-              description="Funciona offline. Dicionário teológico integrado com IA que explica termos complexos sem sair da página."
+              icon={Scroll}
+              title="Estúdio Exegético"
+              description="Editor de texto focado, com barra lateral de busca bíblica e inserção rápida de versículos que gera conexões automáticas na sua Teia."
             />
           </div>
         </div>
       </section>
 
       {/* Gamification Explanation */}
-      <section className="py-20 bg-stone-900 text-stone-200">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center gap-16">
-          <div className="flex-1 space-y-6">
-            <h2 className="text-4xl font-serif font-bold text-white">Gamificação Sagrada</h2>
-            <p className="text-lg text-stone-400">
-              Substituímos termos de jogos seculares por uma linguagem do Reino, criando uma experiência imersiva e reverente.
+      <section className="py-24 bg-stone-950 text-stone-200 relative overflow-hidden">
+        {/* Pattern Background */}
+        <div className="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center gap-16 relative z-10">
+          <div className="flex-1 space-y-8">
+            <div>
+              <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mb-4">Gamificação Sagrada</h2>
+              <div className="h-1 w-20 bg-amber-600 rounded-full"></div>
+            </div>
+
+            <p className="text-xl text-stone-400 leading-relaxed font-light">
+              Substituímos a lógica viciante dos jogos seculares por um sistema que incentiva a constância e a profundidade. Em vez de competir, você colabora. Em vez de "power-ups", recebe dons espirituais simbólicos.
             </p>
-            <div className="grid grid-cols-2 gap-4 mt-8">
-              <GameTerm secular="XP" kingdom="Talentos" />
-              <GameTerm secular="Level" kingdom="Estatura" />
-              <GameTerm secular="Clan" kingdom="Tribo" />
-              <GameTerm secular="Streak" kingdom="Constância" />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
+              <GameTerm secular="XP (Experiência)" kingdom="Talentos" />
+              <GameTerm secular="Level (Nível)" kingdom="Estatura" />
+              <GameTerm secular="Clan / Guild" kingdom="Tribo" />
+              <GameTerm secular="Streak (Sequência)" kingdom="Constância" />
             </div>
           </div>
-          <div className="flex-1">
-            {/* Visual Placeholder for App Interface */}
-            <div className="bg-stone-800 rounded-2xl p-4 border border-stone-700 shadow-2xl skew-y-3 rotate-2 hover:rotate-0 transition-all duration-700">
-              <div className="bg-stone-900 rounded-xl p-6 h-80 flex items-center justify-center text-stone-600 font-mono text-sm">
-                [Interface do App: Dashboard do Peregrino]
+
+          <div className="flex-1 w-full relative">
+            {/* Abstract UI Representation */}
+            <div className="absolute -top-10 -right-10 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl"></div>
+
+            <div className="relative bg-stone-900/50 backdrop-blur-sm border border-stone-800 p-8 rounded-3xl shadow-2xl">
+              <div className="flex items-center gap-4 mb-6 border-b border-stone-800 pb-4">
+                <div className="w-12 h-12 rounded-full bg-amber-600/20 flex items-center justify-center border border-amber-600/50 text-amber-500 font-bold">
+                  XII
+                </div>
+                <div>
+                  <div className="text-sm text-stone-400 uppercase tracking-widest font-bold">Estatura</div>
+                  <div className="text-xl text-white font-serif">Discípulo Maduro</div>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="h-2 bg-stone-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-amber-700 to-amber-500 w-[75%]"></div>
+                </div>
+                <div className="flex justify-between text-xs text-stone-500 font-mono">
+                  <span>TALENTOS: 4,250</span>
+                  <span>PRÓXIMO: OBREIRO</span>
+                </div>
               </div>
             </div>
           </div>
@@ -110,16 +151,15 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-stone-950 text-stone-500 py-12 border-t border-stone-900">
+      <footer className="bg-white text-stone-500 py-12 border-t border-stone-200">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="text-sm">
-            © 2024 Koinonia Project. Open Source.
+          <div className="text-sm flex items-center gap-2">
+            <span className="font-bold text-stone-900">Koinonia Project</span> • Open Source
           </div>
-          <div className="flex gap-6">
-            <Link href="/transparencia" className="hover:text-amber-500 transition-colors flex items-center gap-2">
-              <Heart size={16} /> Transparência
+          <div className="flex gap-8 text-sm font-medium">
+            <Link href="/transparencia" className="hover:text-amber-600 transition-colors flex items-center gap-2">
+              <Heart size={16} /> Transparência Financeira
             </Link>
-            <a href="https://github.com/seu-repo" className="hover:text-white transition-colors">GitHub</a>
           </div>
         </div>
       </footer>
@@ -129,11 +169,11 @@ export default function LandingPage() {
 
 function FeatureCard({ icon: Icon, title, description }: any) {
   return (
-    <div className="p-8 rounded-2xl bg-stone-50 border border-stone-100 hover:border-indigo-100 hover:shadow-lg hover:shadow-indigo-50/50 transition-all cursor-default group">
-      <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-indigo-900 mb-6 shadow-sm group-hover:scale-110 transition-transform">
-        <Icon size={24} />
+    <div className="p-8 rounded-3xl bg-stone-50 border border-stone-100 hover:border-amber-200 hover:bg-amber-50/30 transition-all cursor-default group">
+      <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-stone-900 mb-6 shadow-sm border border-stone-100 group-hover:scale-110 group-hover:border-amber-200 transition-all">
+        <Icon size={28} className="text-amber-600" />
       </div>
-      <h3 className="text-xl font-bold text-indigo-950 mb-3">{title}</h3>
+      <h3 className="text-2xl font-serif font-bold text-stone-900 mb-3">{title}</h3>
       <p className="text-stone-500 leading-relaxed">
         {description}
       </p>
@@ -143,10 +183,10 @@ function FeatureCard({ icon: Icon, title, description }: any) {
 
 function GameTerm({ secular, kingdom }: any) {
   return (
-    <div className="flex items-center justify-between bg-stone-800/50 p-4 rounded-lg border border-stone-700/50">
-      <span className="text-stone-500 text-sm line-through">{secular}</span>
-      <ArrowRight size={14} className="text-stone-600" />
-      <span className="text-amber-400 font-bold">{kingdom}</span>
+    <div className="flex items-center justify-between bg-stone-900 p-4 rounded-xl border border-stone-800 hover:border-amber-900/50 transition-colors group">
+      <span className="text-stone-600 text-xs font-mono uppercase tracking-wider group-hover:text-stone-500 transition-colors">{secular}</span>
+      <ArrowRight size={14} className="text-stone-700" />
+      <span className="text-amber-500 font-bold font-serif tracking-wide">{kingdom}</span>
     </div>
   )
 }

@@ -66,6 +66,6 @@ export async function joinTribeAction(leaderUsername: string) {
         return { success: false, message: "Erro ao entrar na tribo." }
     }
 
-    revalidatePath('/app/discipulado')
+    revalidatePath('/discipulado')
     return { success: true, message: "Você agora faz parte desta Tribo!" }
 }

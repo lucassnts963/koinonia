@@ -1,11 +1,11 @@
-import { getKnowledgeGraph } from '@/actions/graph'
+import { getTeiaData, GraphData } from '@/actions/teia'
 import ForceGraphWrapper from '@/components/teia/ForceGraphWrapper'
 import { Network } from 'lucide-react'
 
-export const dynamic = 'force-dynamic'
+export const dynamicMode = 'force-dynamic' // evitar cache estático já que dados mudam
 
 export default async function TeiaPage() {
-    const graphData = await getKnowledgeGraph()
+    const data: GraphData = await getTeiaData()
 
     return (
         <div className="space-y-6">
@@ -24,9 +24,15 @@ export default async function TeiaPage() {
                 </p>
             </header>
 
-            {/* Área do Grafo Interativo */}
-            <div className="w-full flex justify-center">
-                <ForceGraphWrapper data={graphData} />
+            {/* Client Component do Grafo (Wrapper) */}
+            <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden h-[600px] relative">
+                <ForceGraphWrapper data={data} />
+
+                {data.nodes.length === 0 && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
+                        <p className="text-stone-500">Nenhuma conexão encontrada ainda. Comece a ler e anotar!</p>
+                    </div>
+                )}
             </div>
 
             <div className="bg-white p-6 rounded-xl border border-stone-100 shadow-sm">

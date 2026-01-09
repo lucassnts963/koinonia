@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { getDefinition } from '@/app/actions/dictionary'
+import { getDefinition } from '@/actions/dictionary'
 
 export default function BibleText({ text, lang }: { text: string, lang: string }) {
     const [selectedWord, setSelectedWord] = useState(null)

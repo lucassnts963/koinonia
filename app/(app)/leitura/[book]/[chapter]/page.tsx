@@ -48,22 +48,33 @@ export default async function ChapterPage({ params }: PageProps) {
             </div>
 
             {/* Texto Bíblico */}
-            <div className="space-y-1"> {/* Reduzi o espaçamento vertical pois o componente já tem margem */}
-                {data.verses.map((verse) => (
-                    // Substituímos a div manual pelo componente
-                    <InteractiveVerse
-                        key={verse.id}
-                        text={verse.text}
-                        verseNumber={verse.verse}
-                    />
-                ))}
+            <div className="space-y-1">
+                {data.verses.map((verse) => {
+                    // Verifica se existe alguma nota para este versículo
+                    // Otimização: Em produção faríamos um Map/Set fora do loop, 
+                    // mas para 176 versículos (Salmo 119) ainda é ok.
+                    // Para o MVP não carregamos notas ainda nesse componente de server page,
+                    // vamos deixar hasNote={false} ou implementar o fetch de notas na page.
+                    // Como não pedi para buscar notas na page ainda, vamos deixar false ou buscar rapido.
+
+                    return (
+                        <InteractiveVerse
+                            key={verse.id}
+                            text={verse.text}
+                            verseNumber={verse.verse}
+                            bookSlug={book}
+                            chapter={parseInt(chapter)}
+                        // hasNote={notes.some(n => n.verse === verse.verse)} // TODO: Carregar notas
+                        />
+                    )
+                })}
             </div>
 
             {/* ÁREA DE GAMIFICAÇÃO */}
             <ChapterComplete
                 bookSlug={book}
                 chapter={parseInt(chapter)}
-                nextUrl={data.next ? `/app/leitura/${data.next.bookSlug}/${data.next.chapter}` : null}
+                nextUrl={data.next ? `/leitura/${data.next.bookSlug}/${data.next.chapter}` : null}
             />
 
             {/* Botão Próximo Gigante */}

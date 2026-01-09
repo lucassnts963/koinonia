@@ -39,7 +39,6 @@ export const getBooks = cache(async () => {
 })
 
 export const getChapter = cache(async (bookSlug: string, chapter: number, versionSlug = 'acf') => {
-    console.log(`🔍 [Service] Buscando: ${versionSlug} > ${bookSlug} > ${chapter}`)
     const supabase = getPublicClient()
 
     // 1. Pegar ID da versão

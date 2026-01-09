@@ -31,15 +31,20 @@ export async function getDefinition(term: string, language: string = 'pt-BR') {
             messages: [
                 {
                     role: "system",
-                    content: `You are a biblical scholar and theologian assistant. 
-          Define the term provided strictly within a biblical and Christian context. 
-          Keep it concise (max 3 sentences). 
-          Output only the definition text.
-          Language: ${language}.`
+                    content: `You are a biblical scholar and theologian assistant.
+Output format:
+**Original:** [Hebrew/Greek Word] (*Transliteration*) - [Literal Meaning]
+**Definição:** [Concise theological definition in max 3 sentences]
+
+Requirements:
+1. Identify the primary original root word (Hebrew for OT concepts, Greek for NT concepts).
+2. Provide the literal etymological meaning.
+3. Provide a concise theological definition.
+4. Language: ${language || 'pt-BR'}.`
                 },
                 {
                     role: "user",
-                    content: `Define: "${term}"`
+                    content: `Analyze the term "${term}" strictly within a biblical context.`
                 }
             ],
             temperature: 0.3, // Baixa criatividade para evitar alucinações teológicas

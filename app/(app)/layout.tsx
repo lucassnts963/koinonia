@@ -1,4 +1,4 @@
-import { Navigation } from '@/components/layout/Navigation'
+import Navigation from '@/components/layout/Navigation'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getSafeUser } from '@/lib/supabase/auth'
@@ -20,7 +20,7 @@ export default async function AppLayout({
 
     return (
         <div className="min-h-screen bg-stone-50">
-            <Navigation />
+            <Navigation user={user} />
             <main className="md:pl-64 min-h-screen pb-20 md:pb-0 transition-all">
                 <div className="max-w-4xl mx-auto p-4 md:p-8">
                     {children}
