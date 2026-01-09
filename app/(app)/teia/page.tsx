@@ -2,7 +2,7 @@ import { getTeiaData, GraphData } from '@/actions/teia'
 import ForceGraphWrapper from '@/components/teia/ForceGraphWrapper'
 import { Network } from 'lucide-react'
 
-export const dynamicMode = 'force-dynamic' // evitar cache estático já que dados mudam
+export const dynamic = 'force-dynamic' // evitar cache estático já que dados mudam
 
 export default async function TeiaPage() {
     const data: GraphData = await getTeiaData()

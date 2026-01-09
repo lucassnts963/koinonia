@@ -1,10 +1,23 @@
-// components/TransparencyMeter.tsx
-import { Progress } from "@/components/ui/progress"
+interface Cost {
+    id: number;
+    service_name: string;
+    amount_usd: number;
+}
 
-export default function TransparencyMeter({ costs, donations }) {
-    const totalCost = costs.reduce((acc, item) => acc + item.amount_usd, 0)
+interface Donation {
+    id: number;
+    net_amount_brl: number;
+}
+
+interface TransparencyMeterProps {
+    costs: Cost[];
+    donations: Donation[];
+}
+
+export default function TransparencyMeter({ costs, donations }: TransparencyMeterProps) {
+    const totalCost = costs.reduce((acc: number, item: Cost) => acc + item.amount_usd, 0)
     // Convertendo doações BRL para USD (apenas visual) ou mantendo tudo em BRL
-    const totalDonated = donations.reduce((acc, item) => acc + item.net_amount_brl, 0)
+    const totalDonated = donations.reduce((acc: number, item: Donation) => acc + item.net_amount_brl, 0)
 
     const percentage = Math.min((totalDonated / totalCost) * 100, 100)
     const isCovered = totalDonated >= totalCost
