@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 export type GraphNode = {
     id: string
     name: string
-    group: 'OT' | 'NT' | 'Concept'
+    group: 'VT' | 'NT' | 'Concept'
     val: number // Tamanho do nó
 }
 
@@ -35,11 +35,11 @@ export async function getKnowledgeGraph(): Promise<GraphData> {
     // 2. DADOS SIMULADOS (MOCK) - As grandes conexões da Bíblia
     // Isso garante que sua Teia não fique vazia enquanto não populamos o banco
     const mockNodes: GraphNode[] = [
-        { id: 'gn-1-1', name: 'Gênesis 1:1', group: 'OT', val: 5 },
+        { id: 'gn-1-1', name: 'Gênesis 1:1', group: 'VT', val: 5 },
         { id: 'jn-1-1', name: 'João 1:1', group: 'NT', val: 5 },
-        { id: 'is-53', name: 'Isaías 53', group: 'OT', val: 4 },
+        { id: 'is-53', name: 'Isaías 53', group: 'VT', val: 4 },
         { id: 'mt-27', name: 'Mateus 27', group: 'NT', val: 4 },
-        { id: 'ex-12', name: 'Páscoa (Êxodo)', group: 'OT', val: 3 },
+        { id: 'ex-12', name: 'Páscoa (Êxodo)', group: 'VT', val: 3 },
         { id: '1co-5-7', name: 'Cristo, Nossa Páscoa', group: 'NT', val: 3 },
         { id: 'creation', name: 'Criação', group: 'Concept', val: 8 },
         { id: 'redemption', name: 'Redenção', group: 'Concept', val: 8 },

@@ -31,7 +31,7 @@ export default async function BibleIndexPage() {
         }
     }
 
-    const oldTestament = books?.filter(b => b.testament === 'OT') || []
+    const oldTestament = books?.filter(b => b.testament === 'VT') || []
     const newTestament = books?.filter(b => b.testament === 'NT') || []
 
     return (
