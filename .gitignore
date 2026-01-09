@@ -42,3 +42,9 @@ next-env.d.ts
 
 # supabase
 credentials.md
+
+# pwa
+/public/sw.js
+/public/swe-worker-*.js
+/public/worker-*.js
+
