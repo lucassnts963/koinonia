@@ -83,7 +83,7 @@ export default async function BibleIndexPage() {
                         <Link
                             key={book.slug}
                             href={`/leitura/${book.slug}`}
-                            className="bg-stone-50 p-3 rounded-lg border border-stone-100 hover:bg-white hover:border-amber-300 hover:shadow-sm transition text-center"
+                            className="bg-white p-3 rounded-lg border border-stone-100 hover:bg-white hover:border-amber-300 hover:shadow-sm transition text-center"
                         >
                             <span className="font-serif text-stone-700 font-medium">{book.name}</span>
                         </Link>

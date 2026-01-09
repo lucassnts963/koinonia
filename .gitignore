@@ -44,7 +44,7 @@ next-env.d.ts
 credentials.md
 
 # pwa
-/public/sw.js
-/public/swe-worker-*.js
-/public/worker-*.js
+sw.js
+swe-worker-*.js
+worker-*.js
 
