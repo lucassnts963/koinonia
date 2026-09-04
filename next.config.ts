@@ -13,7 +13,9 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 });
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Empacota o servidor + apenas as dependências usadas em .next/standalone,
+  // para a imagem Docker não carregar node_modules inteiro.
+  output: "standalone",
   reactStrictMode: true,
   images: {
     remotePatterns: [

@@ -1,0 +1,38 @@
+# Variante usada com docker-compose.supabase.yml: além do app, publica o
+# gateway do Supabase self-hosted num subdomínio próprio.
+{
+	email {$ACME_EMAIL}
+}
+
+{$APP_DOMAIN} {
+	encode zstd gzip
+
+	@sw path /sw.js /workbox-*.js /worker-*.js
+	header @sw Cache-Control "no-cache, no-store, must-revalidate"
+
+	@static path /_next/static/*
+	header @static Cache-Control "public, max-age=31536000, immutable"
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	reverse_proxy app:3000
+}
+
+# O navegador fala com o Supabase direto (auth, realtime, PostgREST),
+# então o gateway precisa de um hostname público e TLS.
+# NEXT_PUBLIC_SUPABASE_URL deve ser exatamente https://{$SUPABASE_DOMAIN}
+{$SUPABASE_DOMAIN} {
+	encode zstd gzip
+
+	# /  do gateway serve o Studio, protegido só por basic auth do dashboard.
+	# Se a VPS é pública, bloqueie o Studio aqui e acesse por túnel SSH.
+	@studio path / /project* /default*
+	respond @studio 404
+
+	reverse_proxy envoy:8000
+}

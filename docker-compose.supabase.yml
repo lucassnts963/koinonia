@@ -1,0 +1,37 @@
+# =====================================================================
+# Overlay: Koinonia + Supabase self-hosted na MESMA VPS.
+#
+#   1. ./scripts/supabase-selfhost.sh      (baixa a stack oficial)
+#   2. cd infra/supabase && docker compose up -d && cd ../..
+#   3. docker compose -f docker-compose.yml -f docker-compose.supabase.yml up -d --build
+#
+# A stack do Supabase roda como um projeto Compose separado (`name: supabase`),
+# de propósito: assim `docker compose down` do app nunca derruba o banco.
+# Este overlay só (a) liga o app à rede do Supabase e (b) publica o gateway
+# do Supabase num subdomínio, com TLS pelo mesmo Caddy.
+#
+# Leia docs/DEPLOY.md §4 antes. Self-host do Supabase é ~12 contêineres e
+# backup por sua conta.
+# =====================================================================
+
+services:
+  app:
+    networks:
+      - koinonia
+      - supabase
+
+  caddy:
+    environment:
+      SUPABASE_DOMAIN: "${SUPABASE_DOMAIN:?defina no .env (ex: api.koinonia.example.com)}"
+    volumes:
+      # Substitui o Caddyfile pelo que também publica o gateway do Supabase.
+      - ./infra/Caddyfile.supabase:/etc/caddy/Caddyfile:ro
+    networks:
+      - koinonia
+      - supabase
+
+networks:
+  supabase:
+    external: true
+    # Nome gerado pelo `name: supabase` do compose oficial.
+    name: supabase_default

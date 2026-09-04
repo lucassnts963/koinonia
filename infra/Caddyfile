@@ -1,0 +1,27 @@
+# TLS é automático: o Caddy emite e renova o certificado do APP_DOMAIN
+# sozinho, desde que 80 e 443 estejam abertos e o DNS já aponte para a VPS.
+{
+	email {$ACME_EMAIL}
+}
+
+{$APP_DOMAIN} {
+	encode zstd gzip
+
+	# O service worker do PWA não pode ser cacheado por muito tempo,
+	# senão o usuário fica preso numa versão antiga do app.
+	@sw path /sw.js /workbox-*.js /worker-*.js
+	header @sw Cache-Control "no-cache, no-store, must-revalidate"
+
+	# Assets com hash no nome são imutáveis.
+	@static path /_next/static/*
+	header @static Cache-Control "public, max-age=31536000, immutable"
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	reverse_proxy app:3000
+}
