@@ -54,3 +54,4 @@ sw.js
 swe-worker-*.js
 worker-*.js
 
+supabase/.temp/

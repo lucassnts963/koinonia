@@ -6,7 +6,11 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "seed:bible": "node scripts/seed-bible.js"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",

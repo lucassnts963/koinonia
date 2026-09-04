@@ -206,12 +206,14 @@ banco não é backup.
 
 Ordem de prioridade, herdadas do handoff:
 
-- **Licença da Bíblia.** `scripts/seed-bible.js` importa a *Almeida
-  Corrigida Fiel*, protegida por direitos autorais da Sociedade Bíblica
-  Trinitariana do Brasil. Um repositório de terceiro redistribuir não torna
-  o uso lícito, e o app tem página de doações — não é uso privado. Trocar
-  por texto em domínio público (ARC 1898/1911 ou *A Bíblia Livre*) **antes**
-  de abrir para usuários: migrar `bible_verses` fica mais caro a cada dia.
+- ~~**Licença da Bíblia.**~~ Resolvido em
+  `20260904140000_biblia_multiversao_e_licenca.sql`. A ACF saiu do seed e
+  ficou no catálogo como `licensed` e desabilitada; o padrão agora é *A
+  Bíblia Livre*. **Atenção:** BLIVRE é **CC BY 3.0 BR**, não domínio
+  público — exige atribuição visível. O crédito está em
+  `bible_versions.attribution` e precisa ser renderizado onde o texto
+  aparece. Enquanto isso não estiver na tela, a condição da licença não
+  está cumprida.
 - ~~**Talentos auto-emitíveis.**~~ Corrigido em
   `20260904130000_reconciliacao_e_lockdown_progressao.sql` por GRANT de
   coluna (RLS decide linhas, nunca colunas). **Ainda não aplicado em

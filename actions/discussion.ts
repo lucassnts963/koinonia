@@ -287,3 +287,48 @@ export async function publishStudy(studyId: string) {
         body: study.content,
     })
 }
+
+/** Tribos das quais o usuário é membro — usado no seletor do compositor. */
+export async function listMyTribes() {
+    const { supabase, user } = await requireUser()
+
+    const { data } = await supabase
+        .from('tribe_members')
+        .select('role, tribe:tribe_id ( id, name, slug )')
+        .eq('user_id', user.id)
+
+    return (data ?? [])
+        .map((m) => ({ ...(m.tribe as unknown as { id: string; name: string; slug: string }), role: m.role }))
+        .filter((t) => t.id)
+}
+
+/**
+ * Reações do usuário atual sobre um conjunto de alvos.
+ *
+ * Vem separado de listDiscussions/getDiscussion porque a reação é do
+ * leitor, não do conteúdo: misturar as duas coisas na mesma query
+ * impediria cachear a discussão, que é igual para todo mundo.
+ */
+export async function getMyReactions(
+    targetType: 'discussion' | 'reply',
+    targetIds: string[]
+): Promise<Record<string, ReactionKind[]>> {
+    if (targetIds.length === 0) return {}
+
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return {}
+
+    const { data } = await supabase
+        .from('reactions')
+        .select('target_id, kind')
+        .eq('user_id', user.id)
+        .eq('target_type', targetType)
+        .in('target_id', targetIds)
+
+    const porAlvo: Record<string, ReactionKind[]> = {}
+    for (const r of data ?? []) {
+        porAlvo[r.target_id] = [...(porAlvo[r.target_id] ?? []), r.kind as ReactionKind]
+    }
+    return porAlvo
+}

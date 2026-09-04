@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import InteractiveVerse from '@/components/bible/InteractiveVerse'
 import ChapterComplete from '@/components/gamification/ChapterComplete'
+import DiscussaoAncorada from '@/components/discussion/DiscussaoAncorada'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,8 +48,10 @@ export default async function ChapterPage({ params }: PageProps) {
                 </div>
             </div>
 
-            {/* Texto Bíblico */}
-            <div className="space-y-1">
+            {/* Texto Bíblico.
+                dir vem da versão: hebraico é RTL, e forçar LTR embaralharia
+                a leitura. */}
+            <div className="space-y-1" dir={data.version?.direction ?? 'ltr'}>
                 {data.verses.map((verse) => {
                     // Verifica se existe alguma nota para este versículo
                     // Otimização: Em produção faríamos um Map/Set fora do loop, 
@@ -75,6 +78,41 @@ export default async function ChapterPage({ params }: PageProps) {
                 bookSlug={book}
                 chapter={parseInt(chapter)}
                 nextUrl={data.next ? `/leitura/${data.next.bookSlug}/${data.next.chapter}` : null}
+            />
+
+            {/* Crédito da tradução.
+                Não é enfeite: A Bíblia Livre é CC BY 3.0 BR, e atribuição é
+                condição da licença. Sem isto na tela, o texto está no ar
+                fora dos termos. O conteúdo vem de bible_versions.attribution,
+                então cada versão declara o próprio crédito. */}
+            {data.version?.attribution && (
+                <p className="mt-8 border-t border-stone-200 pt-4 text-xs text-stone-400">
+                    {data.version.name}
+                    {data.version.abbreviation ? ` (${data.version.abbreviation})` : ''} — {data.version.attribution}
+                    {data.version.license_url && (
+                        <>
+                            {' '}
+                            <a
+                                href={data.version.license_url}
+                                target="_blank"
+                                rel="noopener noreferrer license"
+                                className="underline hover:text-stone-600"
+                            >
+                                Licença
+                            </a>
+                        </>
+                    )}
+                </p>
+            )}
+
+            {/* Discussão ancorada neste capítulo.
+                A âncora é `<livro>-<capítulo>`, o mesmo formato que
+                linkDaAncora() em /discussao/[id] sabe desmontar para
+                trazer o leitor de volta para cá. */}
+            <DiscussaoAncorada
+                anchorType="passage"
+                anchorRef={`${book}-${chapter}`}
+                titulo={`Conversa sobre ${data.book.name} ${chapter}`}
             />
 
             {/* Botão Próximo Gigante */}

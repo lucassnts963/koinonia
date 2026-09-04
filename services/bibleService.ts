@@ -17,6 +17,36 @@ export type BibleVerse = {
     text: string
 }
 
+export type BibleVersion = {
+    id: number
+    slug: string
+    name: string
+    abbreviation: string | null
+    language: string
+    direction: 'ltr' | 'rtl'
+    license: 'public_domain' | 'cc_by' | 'licensed'
+    license_url: string | null
+    /** Crédito exigido pela licença. CC BY só é cumprida se isto for exibido. */
+    attribution: string | null
+}
+
+const CAMPOS_VERSAO =
+    'id, slug, name, abbreviation, language, direction, license, license_url, attribution'
+
+/**
+ * Versões que este leitor pode abrir. A RLS de `bible_versions` já esconde
+ * as desabilitadas, e a de `bible_verses` esconde o texto das licenciadas
+ * sem concessão — então o que voltar daqui é o que pode ser lido.
+ */
+export const listVersions = cache(async () => {
+    const supabase = getPublicClient()
+    const { data } = await supabase
+        .from('bible_versions')
+        .select(CAMPOS_VERSAO)
+        .order('sort_order')
+    return (data ?? []) as unknown as BibleVersion[]
+})
+
 // CRIA UM CLIENTE SIMPLES PARA LEITURA DE DADOS PÚBLICOS (Sem Cookies)
 // Isso evita erros de contexto entre Servidor/Cliente
 function getPublicClient() {
@@ -38,19 +68,28 @@ export const getBooks = cache(async () => {
     return data as BibleBook[]
 })
 
-export const getChapter = cache(async (bookSlug: string, chapter: number, versionSlug = 'acf') => {
+export const getChapter = cache(async (bookSlug: string, chapter: number, versionSlug?: string) => {
     const supabase = getPublicClient()
 
-    // 1. Pegar ID da versão
-    const { data: version, error: vError } = await supabase
-        .from('bible_versions')
-        .select('id')
-        .eq('slug', versionSlug)
-        .single()
+    // 1. Resolver a versão.
+    //
+    // Não existe mais padrão fixo no código. Antes era 'acf', que hoje está
+    // catalogada como licensed e desabilitada — o leitor inteiro quebraria.
+    // O padrão passa a ser a primeira versão habilitada por sort_order, que
+    // é decisão do catálogo, não do código.
+    const consulta = supabase.from('bible_versions').select(CAMPOS_VERSAO)
+
+    const { data: version, error: vError } = versionSlug
+        ? await consulta.eq('slug', versionSlug).maybeSingle()
+        : await consulta.order('sort_order').limit(1).maybeSingle()
 
     if (vError || !version) {
         console.error("❌ Versão não encontrada:", vError)
-        throw new Error('Versão da Bíblia não encontrada')
+        throw new Error(
+            versionSlug
+                ? `Versão "${versionSlug}" indisponível.`
+                : 'Nenhuma versão da Bíblia habilitada. Rode `npm run seed:bible`.'
+        )
     }
 
     // 2. Pegar dados do Livro
@@ -84,6 +123,7 @@ export const getChapter = cache(async (bookSlug: string, chapter: number, versio
         book,
         chapter,
         verses: verses as BibleVerse[],
+        version: version as unknown as BibleVersion,
         next: nextChapter,
         prev: prevChapter
     }
