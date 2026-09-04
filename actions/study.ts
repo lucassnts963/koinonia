@@ -58,27 +58,49 @@ export async function saveStudy(id: string | null, title: string, content: strin
             .select()
             .single()
 
-        if (newStudy) studyId = newStudy.id
+        // O erro era descartado: o estudo não era criado e mesmo assim a
+        // função respondia sucesso, então o usuário perdia o que escreveu
+        // sem saber.
+        if (error || !newStudy) {
+            console.error('[saveStudy]', error)
+            return { success: false, message: 'Não foi possível salvar o estudo.' }
+        }
+
+        studyId = newStudy.id
     }
 
     // --- AUTO-LINKING: Extrair referências do texto e criar conexões na Teia ---
-    if (studyId && content) {
+    if (studyId) {
         // Regex para encontrar **Gn 1:1** inserido pela sidebar
         const regex = /\*\*([1-3]?[A-Za-zÀ-ÿ]+ \d+:\d+)\*\*/g
-        const matches = [...content.matchAll(regex)]
+        const source = `study-${studyId}`
 
-        if (matches.length > 0) {
-            const links = matches.map(match => ({
-                user_id: user.id,
-                source: `study-${studyId}`, // Nó de origem: O Estudo
-                target: match[1].replace(/ /g, '-').toLowerCase(), // Nó de destino: O Versículo (gn-1:1) -> normalizado
-                type: 'reference'
-            }))
+        // O mesmo versículo pode ser citado várias vezes no estudo; o Set
+        // evita colidir com o índice único de knowledge_links.
+        const targets = new Set(
+            [...(content ?? '').matchAll(regex)].map(m => m[1].replace(/ /g, '-').toLowerCase())
+        )
 
-            // Upsert links (ignora duplicatas se tiver constraint, ou insert normal)
-            // Como não temos constraint unique em (source, target), vamos inserir.
-            // O ideal seria limpar links antigos desse estudo antes, mas para MVP ok.
-            await supabase.from('knowledge_links').insert(links)
+        // Apagar e regravar, sempre — inclusive quando não sobrou nenhuma
+        // referência. Os links deste estudo são derivados do texto, então a
+        // fonte da verdade é o conteúdo atual: reinserir sem limpar
+        // duplicava o grafo a cada save, e limpar só quando há referências
+        // deixaria links órfãos de trechos que o autor apagou.
+        await supabase
+            .from('knowledge_links')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('source', source)
+
+        if (targets.size > 0) {
+            await supabase.from('knowledge_links').insert(
+                [...targets].map(target => ({
+                    user_id: user.id,
+                    source,
+                    target,
+                    type: 'reference',
+                }))
+            )
         }
     }
 

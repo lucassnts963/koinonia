@@ -91,6 +91,16 @@ npx supabase link --project-ref SEU_REF
 npx supabase db push
 ```
 
+A migration `20260904130000_reconciliacao_e_lockdown_progressao.sql`
+revoga o UPDATE do papel `authenticated` em `profiles` e o devolve só nas
+colunas de perfil. Se depois disso alguém rodar um
+`grant ... on all tables in schema public to authenticated` no painel para
+"consertar permissão", os Talentos voltam a ser auto-emitíveis sem aviso.
+
+`supabase/snippets/` é histórico: são SQL avulsos aplicados pelo editor do
+painel antes de existir disciplina de migration. Não aplique nada de lá —
+o que ainda fazia falta foi incorporado à migration acima.
+
 ### Operação
 
 ```bash
@@ -145,10 +155,20 @@ cd infra/supabase && docker compose up -d && cd ../..
 ### 4.3 Aplicar o schema do Koinonia
 
 ```bash
-docker exec -i supabase-db psql -U postgres -d postgres \
-  < supabase/migrations/20260108175522_estrutura_inicial.sql
-# ...e as demais, em ordem cronológica de nome de arquivo
+for f in supabase/migrations/*.sql; do
+  echo ">> $f"
+  docker exec -i supabase-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 < "$f" || break
+done
 ```
+
+A ordem é a alfabética do nome do arquivo, que é cronológica por
+convenção — não reordene. A primeira migration cria a extensão `vector`;
+a imagem `supabase/postgres` já traz o pgvector, mas um Postgres puro não,
+e aí a migration inteira aborta na segunda linha.
+
+Verificado: as oito migrations aplicam limpas num Postgres 16 vazio, e o
+banco resultante roda o app (trigger de criação de perfil, tabelas do
+plano de leitura e o lockdown de progressão inclusos).
 
 ### 4.4 Ligar o app
 
@@ -192,7 +212,8 @@ Ordem de prioridade, herdadas do handoff:
   o uso lícito, e o app tem página de doações — não é uso privado. Trocar
   por texto em domínio público (ARC 1898/1911 ou *A Bíblia Livre*) **antes**
   de abrir para usuários: migrar `bible_verses` fica mais caro a cada dia.
-- **Talentos auto-emitíveis.** A policy `"Users can update own profile"`
-  permite `update` em `profiles` com `auth.uid() = id` sem restringir
-  colunas. Qualquer usuário chama a API do Supabase direto e escreve
-  `talents_balance` / `stature_level`. Em produção isso é público.
+- ~~**Talentos auto-emitíveis.**~~ Corrigido em
+  `20260904130000_reconciliacao_e_lockdown_progressao.sql` por GRANT de
+  coluna (RLS decide linhas, nunca colunas). **Ainda não aplicado em
+  produção** — rode `supabase db push` antes de abrir para usuários, e
+  leia o aviso sobre grants amplos na seção Migrations.

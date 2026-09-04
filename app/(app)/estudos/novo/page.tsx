@@ -71,9 +71,16 @@ export default function NewStudyPage() {
     const handleSave = async () => {
         if (!title.trim()) return alert("Digite um título")
         setSaving(true)
-        await saveStudy(id, title, content)
-        router.push('/estudos')
+        const result = await saveStudy(id, title, content)
         setSaving(false)
+
+        // Sair da tela sem checar o resultado descartava o texto do usuário
+        // quando o save falhava. Em caso de erro, fica onde está.
+        if (!result?.success) {
+            alert(result?.message ?? 'Não foi possível salvar o estudo.')
+            return
+        }
+        router.push('/estudos')
     }
 
     const handleDelete = async () => {
