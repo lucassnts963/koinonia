@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getSafeUser } from '@/lib/supabase/auth'
 import DailyMana from '@/components/dashboard/DailyMana'
 import { getReadingStats } from '@/actions/stats'
+import { constanciaEfetiva } from '@/lib/gamification'
 import { Trophy, Flame, BookOpen, BookHeart, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
@@ -24,8 +25,14 @@ export default async function DashboardPage() {
     const safeProfile = profile || {
         full_name: 'Peregrino',
         constancy_streak: 0,
-        talents_balance: 0
+        talents_balance: 0,
+        last_activity_date: null
     }
+
+    // constancy_streak é gravado só quando um capítulo INÉDITO é lido; quem
+    // some por meses continua com o número antigo no banco. O que se mostra
+    // aqui é se essa sequência ainda está viva hoje, não o valor cru.
+    const constancia = constanciaEfetiva(safeProfile.last_activity_date, safeProfile.constancy_streak)
 
     const stats = await getReadingStats()
 
@@ -48,9 +55,13 @@ export default async function DashboardPage() {
                         <span className="text-xs font-bold uppercase">Constância</span>
                     </div>
                     <p className="text-2xl font-bold text-stone-800">
-                        {/* CORREÇÃO AQUI: mudado de current_streak para constancy_streak */}
-                        {safeProfile.constancy_streak || 0} <span className="text-sm font-normal text-stone-500">dias</span>
+                        {constancia} <span className="text-sm font-normal text-stone-500">dias</span>
                     </p>
+                    {constancia === 0 && (safeProfile.constancy_streak ?? 0) > 0 && (
+                        <p className="mt-1 text-[11px] text-amber-700">
+                            Sua sequência quebrou. Leia hoje para recomeçar.
+                        </p>
+                    )}
                 </div>
                 <div className="bg-stone-100 p-4 rounded-xl border border-stone-200">
                     <div className="flex items-center gap-2 mb-1 text-stone-600">

@@ -1,7 +1,7 @@
 import { getChapter, listVersions } from '@/services/bibleService'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import InteractiveVerse from '@/components/bible/InteractiveVerse'
+import ChapterVerses from '@/components/bible/ChapterVerses'
 import ChapterComplete from '@/components/gamification/ChapterComplete'
 import DiscussaoAncorada from '@/components/discussion/DiscussaoAncorada'
 import VersionPicker from '@/components/bible/VersionPicker'
@@ -67,26 +67,13 @@ export default async function ChapterPage({ params, searchParams }: PageProps) {
             {/* Texto Bíblico.
                 dir vem da versão: hebraico é RTL, e forçar LTR embaralharia
                 a leitura. */}
-            <div className="space-y-1" dir={data.version?.direction ?? 'ltr'}>
-                {data.verses.map((verse) => {
-                    // Verifica se existe alguma nota para este versículo
-                    // Otimização: Em produção faríamos um Map/Set fora do loop, 
-                    // mas para 176 versículos (Salmo 119) ainda é ok.
-                    // Para o MVP não carregamos notas ainda nesse componente de server page,
-                    // vamos deixar hasNote={false} ou implementar o fetch de notas na page.
-                    // Como não pedi para buscar notas na page ainda, vamos deixar false ou buscar rapido.
-
-                    return (
-                        <InteractiveVerse
-                            key={verse.id}
-                            text={verse.text}
-                            verseNumber={verse.verse}
-                            bookSlug={book}
-                            chapter={parseInt(chapter)}
-                        // hasNote={notes.some(n => n.verse === verse.verse)} // TODO: Carregar notas
-                        />
-                    )
-                })}
+            <div dir={data.version?.direction ?? 'ltr'}>
+                <ChapterVerses
+                    versiculosDoServidor={data.verses}
+                    bookSlug={book}
+                    chapter={parseInt(chapter)}
+                    versionSlug={data.version?.slug}
+                />
             </div>
 
             {/* ÁREA DE GAMIFICAÇÃO */}

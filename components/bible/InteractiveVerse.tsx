@@ -13,13 +13,16 @@ export default function InteractiveVerse({
     verseNumber,
     bookSlug,
     chapter,
-    hasNote
+    hasNote,
+    versionSlug
 }: {
     text: string,
     verseNumber: number,
     bookSlug: string,
     chapter: number,
-    hasNote?: boolean
+    hasNote?: boolean,
+    /** Versão sendo lida — sem isto, "Ver na Bíblia" misturava traduções no resultado. */
+    versionSlug?: string
 }) {
     const [loading, setLoading] = useState(false)
     const [showNoteInput, setShowNoteInput] = useState(false)
@@ -69,7 +72,7 @@ export default function InteractiveVerse({
 
         setPopoverLoading(true)
         try {
-            const res = await searchVersesByTerm(activeWord)
+            const res = await searchVersesByTerm(activeWord, versionSlug)
             setSearchResults(res)
         } catch (e) { console.error(e) }
         setPopoverLoading(false)

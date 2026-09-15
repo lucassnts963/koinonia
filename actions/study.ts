@@ -11,14 +11,32 @@ export type VersiculoEncontrado = {
     bible_books: { slug: string; name: string }
 }
 
-export async function searchBible(query: string): Promise<VersiculoEncontrado[]> {
+export async function searchBible(query: string, versionSlug?: string): Promise<VersiculoEncontrado[]> {
     const supabase = await createClient()
 
-    // Usando textSearch para busca correta com tsvector
+    // A config do tsquery precisa bater com a config usada para indexar
+    // `fts` (sync_verse_fts, migration 20260904140000) — 'portuguese' fixo
+    // aqui radicalizava buscas em inglês (KJV) do jeito errado. Sem
+    // versionSlug, cai na mesma versão padrão de getChapter (primeira
+    // habilitada por sort_order), para não misturar traduções na mesma busca.
+    const consultaVersao = supabase
+        .from('bible_versions')
+        .select('id, search_config')
+
+    const { data: versao, error: vError } = versionSlug
+        ? await consultaVersao.eq('slug', versionSlug).maybeSingle()
+        : await consultaVersao.order('sort_order').limit(1).maybeSingle()
+
+    if (vError || !versao) {
+        console.error('[searchBible] versão', vError)
+        return []
+    }
+
     const { data, error } = await supabase
         .from('bible_verses')
         .select('id, verse, text, chapter, bible_books(slug, name)')
-        .textSearch('fts', query, { config: 'portuguese', type: 'websearch' })
+        .eq('version_id', versao.id)
+        .textSearch('fts', query, { config: versao.search_config, type: 'websearch' })
         .limit(10)
 
     if (error) {
