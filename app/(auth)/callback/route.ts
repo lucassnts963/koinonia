@@ -24,6 +24,7 @@ export async function GET(request: Request) {
         }
     }
 
-    // return the user to an error page with instructions
-    return NextResponse.redirect(`${origin}/auth/auth-code-error`)
+    // /auth/auth-code-error nunca existiu como rota — mandar para lá dava
+    // 404 em cima de um erro. /login já tem a UI de mensagem de erro pronta.
+    return NextResponse.redirect(`${origin}/login?erro=confirmacao`)
 }

@@ -19,9 +19,15 @@ export const metadata: Metadata = {
     default: 'Koinonia - Discipulado & Estudo Bíblico',
   },
   description: "Plataforma de aprofundamento bíblico, jornada de leitura gamificada e gestão de discipulado.",
-  icons: {
-    icon: '/icon.png', // Assumindo que existe ou existirá
-  }
+  // `/icon.png` nunca existiu — a referência era um placeholder ("assumindo
+  // que existe") que nunca virou realidade, então o navegador caía no
+  // favicon padrão do scaffold (o ícone genérico da Vercel). app/icon.svg e
+  // app/favicon.ico agora existem de verdade — o App Router já detecta
+  // app/icon.svg pela convenção de arquivo, sem precisar declarar aqui.
+  manifest: '/manifest.json',
+  appleWebApp: {
+    title: 'Koinonia',
+  },
 };
 
 export default function RootLayout({

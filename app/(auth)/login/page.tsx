@@ -1,15 +1,37 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn, signUp } from '@/actions/auth'
 import { Loader2, ShieldCheck, UserPlus, KeyRound, Mail, User } from 'lucide-react'
 import KoinoniaLogo from '@/components/brand/KoinoniaLogo'
 import Link from 'next/link'
 
+// useSearchParams() exige um limite de Suspense em volta — sem isto o
+// build falha ("should be wrapped in a suspense boundary") porque a
+// página não tem como saber o valor de ?erro= antes de rodar no
+// navegador. O formulário em si não depende de dado nenhum do servidor,
+// então o fallback nunca aparece de verdade na prática.
 export default function LoginPage() {
+    return (
+        <Suspense fallback={null}>
+            <LoginForm />
+        </Suspense>
+    )
+}
+
+function LoginForm() {
+    const router = useRouter()
+    const searchParams = useSearchParams()
     const [isLogin, setIsLogin] = useState(true)
     const [loading, setLoading] = useState(false)
     const [message, setMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null)
+
+    useEffect(() => {
+        if (searchParams.get('erro') === 'confirmacao') {
+            setMessage({ type: 'error', text: 'Não foi possível confirmar seu cadastro pelo link. Tente entrar normalmente ou peça um novo link.' })
+        }
+    }, [searchParams])
 
     async function handleSubmit(formData: FormData) {
         setLoading(true)
@@ -18,7 +40,16 @@ export default function LoginPage() {
         try {
             if (isLogin) {
                 const res = await signIn(formData)
-                if (res?.error) setMessage({ type: 'error', text: res.error })
+                if (res?.error) {
+                    setMessage({ type: 'error', text: res.error })
+                } else {
+                    // signIn() não redireciona sozinho de propósito — feito
+                    // aqui, fora de qualquer try/catch em volta de uma
+                    // Server Action, que é o jeito de redirect() dar
+                    // errado (ver comentário em actions/auth.ts).
+                    router.push('/dashboard')
+                    return
+                }
             } else {
                 const res = await signUp(formData)
                 if (res?.error) setMessage({ type: 'error', text: res.error })
