@@ -60,7 +60,7 @@ export default function InteractiveVerse({
         setPopoverLoading(true)
         try {
             const res = await getDefinition(word)
-            if (res?.data) setDefinition({ term: res.data.term, text: res.data.definition })
+            if (res.success) setDefinition({ term: res.data.term, text: res.data.definition })
         } catch (e) { console.error(e) }
         setPopoverLoading(false)
     }

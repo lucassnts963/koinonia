@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, BookOpen, Map, Users, PenTool, Network, Settings, ShieldAlert, Library } from 'lucide-react'
+import { Home, BookOpen, Map, Users, PenTool, Network, Settings, ShieldAlert, Library, Sparkles } from 'lucide-react'
 import KoinoniaLogo from '@/components/brand/KoinoniaLogo'
 
 const navItems = [
@@ -11,6 +11,7 @@ const navItems = [
     { name: 'Jornada', href: '/jornada', icon: Map },
     { name: 'Estudos', href: '/estudos', icon: PenTool },
     { name: 'Wiki', href: '/wiki', icon: Library },
+    { name: 'Agente', href: '/agente', icon: Sparkles },
     { name: 'Teia', href: '/teia', icon: Network },
     { name: 'Tribo', href: '/discipulado', icon: Users },
     { name: 'Tenda', href: '/config', icon: Settings },

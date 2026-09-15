@@ -17,14 +17,24 @@ export type Verbete = {
     created_at: string
 }
 
+type ResultadoDefinicao =
+    | { success: true; data: Verbete; source: 'database' }
+    | { success: false; error: string }
+
 /**
  * Busca um verbete publicado — sem chamada a IA. O cache de IA de antes
  * desta mudança continua valendo (source = 'ai_generated', status =
  * 'published'); o que muda é que nada novo é gerado assim. Sem verbete,
  * quem chamou usa a Concordância (searchVersesByTerm) como alternativa —
  * essa distinção é decidida na UI, não aqui.
+ *
+ * Tipo de retorno explícito de propósito: sem ele, o TypeScript infere
+ * `success` como `boolean` largo em vez do literal `true`/`false` de cada
+ * `return`, e a união deixa de discriminar — `resultado.success ? resultado.data
+ * : null` passava a achar `data` "possivelmente undefined" mesmo depois do
+ * `if`.
  */
-export async function getDefinition(term: string, language: string = 'pt-BR') {
+export async function getDefinition(term: string, language: string = 'pt-BR'): Promise<ResultadoDefinicao> {
     const supabase = await createClient()
 
     const { data, error } = await supabase
