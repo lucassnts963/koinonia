@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { saveNote } from '@/actions/notes'
 import { getDefinition } from '@/actions/dictionary'
 import { searchVersesByTerm, type SearchResult } from '@/actions/bible'
-import { Loader2, Book, PenLine, X, Save, Search, ChevronRight } from 'lucide-react'
+import { Loader2, Book, X, Save, Search, ChevronRight, MessageSquare } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import Link from 'next/link'
 
@@ -125,7 +125,16 @@ export default function InteractiveVerse({
                         onChange={e => setNoteContent(e.target.value)}
                         autoFocus
                     />
-                    <div className="flex justify-end gap-2 mt-2">
+                    <div className="flex items-center justify-end gap-2 mt-2">
+                        {/* A nota é privada; a discussão é da tribo. Ter as duas
+                            no mesmo lugar deixa a escolha explícita no momento
+                            em que a pessoa parou naquele versículo. */}
+                        <Link
+                            href={`/discussao/versiculo/${encodeURIComponent(`${bookSlug}-${chapter}:${verseNumber}`)}`}
+                            className="mr-auto flex items-center gap-1.5 text-xs font-bold text-stone-500 hover:text-amber-700"
+                        >
+                            <MessageSquare size={13} /> Discutir com a tribo
+                        </Link>
                         <button onClick={() => setShowNoteInput(false)} className="p-2 text-stone-400 hover:text-red-500"><X size={16} /></button>
                         <button
                             onClick={handleSaveNote}
