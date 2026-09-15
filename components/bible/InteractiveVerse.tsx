@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { saveNote } from '@/actions/notes'
 import { getDefinition } from '@/actions/dictionary'
 import { searchVersesByTerm, type SearchResult } from '@/actions/bible'
-import { Loader2, Book, PenLine, X, Save, Search, ChevronRight } from 'lucide-react'
+import { Loader2, Book, X, Save, Search, ChevronRight, MessageSquare } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import Link from 'next/link'
 
@@ -13,13 +13,16 @@ export default function InteractiveVerse({
     verseNumber,
     bookSlug,
     chapter,
-    hasNote
+    hasNote,
+    versionSlug
 }: {
     text: string,
     verseNumber: number,
     bookSlug: string,
     chapter: number,
-    hasNote?: boolean
+    hasNote?: boolean,
+    /** Versão sendo lida — sem isto, "Ver na Bíblia" misturava traduções no resultado. */
+    versionSlug?: string
 }) {
     const [loading, setLoading] = useState(false)
     const [showNoteInput, setShowNoteInput] = useState(false)
@@ -57,7 +60,7 @@ export default function InteractiveVerse({
         setPopoverLoading(true)
         try {
             const res = await getDefinition(word)
-            if (res?.data) setDefinition({ term: res.data.term, text: res.data.definition })
+            if (res.success) setDefinition({ term: res.data.term, text: res.data.definition })
         } catch (e) { console.error(e) }
         setPopoverLoading(false)
     }
@@ -69,7 +72,7 @@ export default function InteractiveVerse({
 
         setPopoverLoading(true)
         try {
-            const res = await searchVersesByTerm(activeWord)
+            const res = await searchVersesByTerm(activeWord, versionSlug)
             setSearchResults(res)
         } catch (e) { console.error(e) }
         setPopoverLoading(false)
@@ -87,7 +90,7 @@ export default function InteractiveVerse({
     return (
         <div className={`relative mb-6 p-2 rounded-lg transition-colors ${hasNote ? 'bg-amber-50/50 border-l-2 border-amber-300' : 'hover:bg-stone-50'}`}>
 
-            <p className="text-lg md:text-xl font-serif leading-relaxed text-stone-700">
+            <p className="texto-biblico font-serif leading-relaxed text-stone-700">
                 <button
                     onClick={() => setShowNoteInput(!showNoteInput)}
                     className="mr-2 inline-flex items-center justify-center w-6 h-6 rounded text-xs font-sans font-bold text-stone-400 hover:text-amber-600 hover:bg-amber-100 transition-colors"
@@ -125,7 +128,16 @@ export default function InteractiveVerse({
                         onChange={e => setNoteContent(e.target.value)}
                         autoFocus
                     />
-                    <div className="flex justify-end gap-2 mt-2">
+                    <div className="flex items-center justify-end gap-2 mt-2">
+                        {/* A nota é privada; a discussão é da tribo. Ter as duas
+                            no mesmo lugar deixa a escolha explícita no momento
+                            em que a pessoa parou naquele versículo. */}
+                        <Link
+                            href={`/discussao/versiculo/${encodeURIComponent(`${bookSlug}-${chapter}:${verseNumber}`)}`}
+                            className="mr-auto flex items-center gap-1.5 text-xs font-bold text-stone-500 hover:text-amber-700"
+                        >
+                            <MessageSquare size={13} /> Discutir com a tribo
+                        </Link>
                         <button onClick={() => setShowNoteInput(false)} className="p-2 text-stone-400 hover:text-red-500"><X size={16} /></button>
                         <button
                             onClick={handleSaveNote}

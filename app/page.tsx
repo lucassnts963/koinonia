@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { BookOpen, Map, Users, Heart, ArrowRight, Network, Scroll, Compass } from 'lucide-react'
+import { BookOpen, Map, Users, Heart, ArrowRight, Network, Scroll, Compass, type LucideIcon } from 'lucide-react'
 import KoinoniaLogo from '@/components/brand/KoinoniaLogo'
 
 export default function LandingPage() {
@@ -111,7 +111,7 @@ export default function LandingPage() {
             </div>
 
             <p className="text-xl text-stone-400 leading-relaxed font-light">
-              Substituímos a lógica viciante dos jogos seculares por um sistema que incentiva a constância e a profundidade. Em vez de competir, você colabora. Em vez de "power-ups", recebe dons espirituais simbólicos.
+              Substituímos a lógica viciante dos jogos seculares por um sistema que incentiva a constância e a profundidade. Em vez de competir, você colabora. Em vez de &ldquo;power-ups&rdquo;, recebe dons espirituais simbólicos.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
@@ -167,7 +167,15 @@ export default function LandingPage() {
   )
 }
 
-function FeatureCard({ icon: Icon, title, description }: any) {
+function FeatureCard({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: LucideIcon
+  title: string
+  description: string
+}) {
   return (
     <div className="p-8 rounded-3xl bg-stone-50 border border-stone-100 hover:border-amber-200 hover:bg-amber-50/30 transition-all cursor-default group">
       <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-stone-900 mb-6 shadow-sm border border-stone-100 group-hover:scale-110 group-hover:border-amber-200 transition-all">
@@ -181,7 +189,7 @@ function FeatureCard({ icon: Icon, title, description }: any) {
   )
 }
 
-function GameTerm({ secular, kingdom }: any) {
+function GameTerm({ secular, kingdom }: { secular: string; kingdom: string }) {
   return (
     <div className="flex items-center justify-between bg-stone-900 p-4 rounded-xl border border-stone-800 hover:border-amber-900/50 transition-colors group">
       <span className="text-stone-600 text-xs font-mono uppercase tracking-wider group-hover:text-stone-500 transition-colors">{secular}</span>

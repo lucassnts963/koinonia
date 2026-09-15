@@ -1,169 +1,175 @@
 require('dotenv').config({ path: '.env.local' });
 require('dotenv').config();
 
-const { createClient } = require('@supabase/supabase-js');
 const postgres = require('postgres');
 
-const BIBLE_JSON_URL = 'https://raw.githubusercontent.com/thiagobodruk/bible/master/json/pt_acf.json';
+/**
+ * Semeia UMA versão da Bíblia por execução.
+ *
+ *   node scripts/seed-bible.js blivre     # padrão
+ *   node scripts/seed-bible.js kjv
+ *   node scripts/seed-bible.js --list
+ *
+ * Cada fonte tem um formato próprio, então cada uma traz seu adaptador. O
+ * contrato do adaptador é devolver sempre a mesma coisa:
+ *   [{ order: 1..66, name, abbrev, chapters: [[versículo, ...], ...] }]
+ *
+ * A licença NÃO é registrada aqui: ela é do catálogo, na migration
+ * 20260904140000. Semear um texto cuja versão não está catalogada falha de
+ * propósito — é o que impede alguém subir uma tradução protegida sem
+ * declarar sob que direito ela está no ar.
+ */
+
+const FONTES = {
+    blivre: {
+        url: 'https://raw.githubusercontent.com/Everson33rj/bibialivrejson/main/biblialivre.json',
+        // O arquivo tem um cabeçalho de metadados no índice 0 e depois os
+        // 66 livros, com chaves em português.
+        adapt: (dados) => dados
+            .filter((item) => Array.isArray(item.capitulos))
+            .map((livro, i) => ({
+                order: i + 1,
+                name: livro.nome,
+                abbrev: livro.abrev,
+                chapters: livro.capitulos,
+            })),
+    },
+    kjv: {
+        url: 'https://raw.githubusercontent.com/thiagobodruk/bible/master/json/en_kjv.json',
+        adapt: (dados) => dados.map((book, i) => ({
+            order: i + 1,
+            name: book.name,
+            abbrev: book.abbrev,
+            chapters: book.chapters,
+        })),
+    },
+};
+
+const slug = process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : 'blivre';
+
+if (process.argv.includes('--list')) {
+    console.log('Fontes com adaptador pronto:', Object.keys(FONTES).join(', '));
+    console.log('Outras versões do catálogo ainda não têm fonte definida.');
+    process.exit(0);
+}
+
+const fonte = FONTES[slug];
+if (!fonte) {
+    console.error(`✖ Sem adaptador para "${slug}". Disponíveis: ${Object.keys(FONTES).join(', ')}`);
+    process.exit(1);
+}
+
 const dbUrl = process.env.DATABASE_URL;
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!dbUrl) {
+    console.error('✖ DATABASE_URL não definida. Veja .env.example.');
+    process.exit(1);
+}
 
-async function seedWithPostgres(url) {
-    console.log('🔗 Tentando conexão direta via DATABASE_URL...');
-
-    const sql = postgres(url, {
-        ssl: 'require',
-        connect_timeout: 10,
-    });
+async function main() {
+    // ssl 'require' quebra contra um Postgres local sem TLS (supabase start),
+    // e omitir quebra contra o Supabase gerenciado. Decide pelo host.
+    const local = /(^|@)(localhost|127\.0\.0\.1)/.test(dbUrl);
+    const sql = postgres(dbUrl, { ssl: local ? false : 'require', connect_timeout: 15 });
 
     try {
-        const response = await fetch(BIBLE_JSON_URL);
-        const booksData = await response.json();
-
-        console.log('📖 Dados baixados. Verificando Tabelas...');
-
-        // 1. Inserir Versão
-        const [version] = await sql`
-            insert into bible_versions (name, slug, language)
-            values ('Almeida Corrigida Fiel', 'acf', 'pt-BR')
-            on conflict (slug) do update set name = excluded.name
-            returning id
+        const [versao] = await sql`
+            select id, name, language, license, is_enabled
+              from bible_versions where slug = ${slug}
         `;
 
-        let bookCounter = 1;
-        let allVerses = [];
+        if (!versao) {
+            throw new Error(
+                `A versão "${slug}" não está no catálogo bible_versions. ` +
+                `Aplique as migrations antes de semear — o catálogo é onde a licença fica declarada.`
+            );
+        }
 
-        console.log('📚 Inserindo Livros...');
-        for (const book of booksData) {
-            const testament = bookCounter <= 39 ? 'VT' : 'NT'; // Corrigido OT -> VT
+        if (versao.license === 'licensed') {
+            throw new Error(
+                `"${versao.name}" está marcada como licensed. Não semeie sem contrato: ` +
+                `o texto ficaria hospedado e servido pelo app.`
+            );
+        }
 
+        console.log(`📖 ${versao.name} (${slug}, ${versao.language}) — licença: ${versao.license}`);
+        console.log(`⬇️  ${fonte.url}`);
+
+        const resposta = await fetch(fonte.url);
+        if (!resposta.ok) throw new Error(`Download falhou: HTTP ${resposta.status}`);
+
+        // Alguns arquivos vêm com BOM, que quebra o JSON.parse.
+        const livros = fonte.adapt(JSON.parse((await resposta.text()).replace(/^﻿/, '')));
+
+        if (livros.length !== 66) {
+            throw new Error(`Esperava 66 livros, vieram ${livros.length}. Adaptador errado para esta fonte.`);
+        }
+
+        // `bible_books` é canônico: id, slug e nome em português. Só é
+        // preenchido se estiver vazio, e NUNCA sobrescrito por uma tradução
+        // em outro idioma — reading_history, annotations e a Teia guardam
+        // book_slug como texto e quebrariam junto.
+        const [{ count: livrosExistentes }] = await sql`select count(*)::int from bible_books`;
+
+        const versiculos = [];
+        for (const livro of livros) {
+            if (livrosExistentes === 0) {
+                await sql`
+                    insert into bible_books (id, slug, name, testament, order_index)
+                    values (${livro.order}, ${livro.abbrev}, ${livro.name},
+                            ${livro.order <= 39 ? 'VT' : 'NT'}, ${livro.order})
+                    on conflict (id) do nothing
+                `;
+            }
+
+            // O nome no idioma da versão vive à parte.
             await sql`
-                insert into bible_books (id, slug, name, testament, order_index)
-                values (${bookCounter}, ${book.abbrev}, ${book.name}, ${testament}, ${bookCounter})
-                on conflict (id) do update set name = excluded.name, slug = excluded.slug
+                insert into bible_book_names (book_id, language, name, abbreviation)
+                values (${livro.order}, ${versao.language}, ${livro.name}, ${livro.abbrev})
+                on conflict (book_id, language) do update
+                  set name = excluded.name, abbreviation = excluded.abbreviation
             `;
 
-            book.chapters.forEach((chapterContent, chapterIndex) => {
-                chapterContent.forEach((verseText, verseIndex) => {
-                    allVerses.push({
-                        version_id: version.id,
-                        book_id: bookCounter,
-                        chapter: chapterIndex + 1,
-                        verse: verseIndex + 1,
-                        text: verseText
+            livro.chapters.forEach((capitulo, ci) => {
+                capitulo.forEach((texto, vi) => {
+                    versiculos.push({
+                        version_id: versao.id,
+                        book_id: livro.order,
+                        chapter: ci + 1,
+                        verse: vi + 1,
+                        text: texto,
                     });
                 });
             });
-            bookCounter++;
         }
 
-        console.log(`\n🚀 Inserindo ${allVerses.length} versículos...`);
-
-        for (let i = 0; i < allVerses.length; i += 2000) {
-            const batch = allVerses.slice(i, i + 2000);
-            await sql`
-                insert into bible_verses ${sql(batch, 'version_id', 'book_id', 'chapter', 'verse', 'text')}
-            `;
-            const percent = Math.round(((i + batch.length) / allVerses.length) * 100);
-            process.stdout.write(`\r⏳ Progresso: ${percent}%`);
+        if (livrosExistentes === 0) {
+            console.log(`📚 66 livros cadastrados (canônicos, a partir de ${slug})`);
+        } else {
+            console.log(`📚 Livros já cadastrados — preservados; só os nomes em ${versao.language} foram gravados`);
         }
 
-        console.log('\n✨ Bíblia importada com sucesso via Postgres!');
-        return true;
-    } catch (err) {
-        console.error('\n❌ Falha na conexão Postgres:', err.message);
-        return false;
+        // Re-semear a mesma versão substitui o texto dela, e só o dela.
+        await sql`delete from bible_verses where version_id = ${versao.id}`;
+
+        const LOTE = 2000;
+        for (let i = 0; i < versiculos.length; i += LOTE) {
+            await sql`insert into bible_verses ${sql(versiculos.slice(i, i + LOTE))}`;
+            process.stdout.write(`\r✍️  ${Math.min(i + LOTE, versiculos.length)}/${versiculos.length} versículos`);
+        }
+        console.log('');
+
+        if (!versao.is_enabled) {
+            await sql`update bible_versions set is_enabled = true where id = ${versao.id}`;
+            console.log('✅ Versão habilitada no catálogo.');
+        }
+
+        console.log(`✅ ${versiculos.length} versículos gravados em ${versao.name}.`);
     } finally {
         await sql.end();
     }
 }
 
-async function seedWithSupabase() {
-    console.log('📡 Iniciando Seed via Supabase API...');
-    if (!supabaseUrl || !supabaseKey) {
-        console.error('❌ Erro: Variáveis NEXT_PUBLIC_SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não encontradas.');
-        return;
-    }
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    try {
-        const response = await fetch(BIBLE_JSON_URL);
-        const booksData = await response.json();
-
-        console.log('✅ Versão...');
-        const { data: version, error: vErr } = await supabase
-            .from('bible_versions')
-            .upsert({ name: 'Almeida Corrigida Fiel', slug: 'acf', language: 'pt-BR' }, { onConflict: 'slug' })
-            .select().single();
-
-        if (vErr) {
-            console.error("Erro ao criar versão:", vErr);
-            return;
-        }
-
-        let bookCounter = 1;
-        let versesToInsert = [];
-
-        console.log('📚 Inserindo Livros...');
-        for (const book of booksData) {
-            const testament = bookCounter <= 39 ? 'VT' : 'NT'; // Corrigido OT -> VT
-            const { error: bErr } = await supabase.from('bible_books').upsert({
-                id: bookCounter,
-                slug: book.abbrev,
-                name: book.name,
-                testament: testament,
-                order_index: bookCounter
-            });
-
-            if (bErr) {
-                console.error(`\n❌ Erro ao inserir livro ${book.name}:`, bErr.message);
-                return;
-            }
-
-            book.chapters.forEach((chapterContent, chapterIndex) => {
-                chapterContent.forEach((verseText, verseIndex) => {
-                    versesToInsert.push({
-                        version_id: version.id,
-                        book_id: bookCounter,
-                        chapter: chapterIndex + 1,
-                        verse: verseIndex + 1,
-                        text: verseText
-                    });
-                });
-            });
-            process.stdout.write(`\r📚 Processado: ${book.name} (${bookCounter}/66)      `);
-            bookCounter++;
-        }
-
-        console.log(`\n🚀 Inserindo ${versesToInsert.length} versículos via API...`);
-        const BATCH_SIZE = 500;
-        for (let i = 0; i < versesToInsert.length; i += BATCH_SIZE) {
-            const batch = versesToInsert.slice(i, i + BATCH_SIZE);
-            const { error: insErr } = await supabase.from('bible_verses').insert(batch);
-
-            if (insErr) {
-                console.error(`\n❌ Erro no lote ${i}:`, insErr.message);
-            }
-
-            const p = Math.round((i / versesToInsert.length) * 100);
-            process.stdout.write(`\r⏳ Progresso API: ${p}%`);
-        }
-        console.log('\n✨ Bíblia importada com sucesso via Supabase API!');
-    } catch (err) {
-        console.error('\n❌ Erro fatal no script API:', err);
-    }
-}
-
-async function main() {
-    let success = false;
-    if (dbUrl) {
-        success = await seedWithPostgres(dbUrl);
-    }
-
-    if (!success) {
-        await seedWithSupabase();
-    }
-}
-
-main();
+main().catch((e) => {
+    console.error('\n✖', e.message);
+    process.exit(1);
+});

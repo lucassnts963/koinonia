@@ -7,7 +7,7 @@ export default function SupportCard() {
             <div className="bg-indigo-600 p-6 text-center">
                 <h3 className="text-white text-2xl font-bold font-serif">Seja uma Coluna</h3>
                 <p className="text-indigo-100 mt-2 text-sm">
-                    "A quem vencer, eu o farei coluna no templo do meu Deus" (Ap 3:12)
+                    &ldquo;A quem vencer, eu o farei coluna no templo do meu Deus&rdquo; (Ap 3:12)
                 </p>
             </div>
 

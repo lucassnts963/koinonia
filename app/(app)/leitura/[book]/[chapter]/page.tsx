@@ -1,8 +1,11 @@
-import { getChapter } from '@/services/bibleService'
+import { getChapter, listVersions } from '@/services/bibleService'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import InteractiveVerse from '@/components/bible/InteractiveVerse'
+import ChapterVerses from '@/components/bible/ChapterVerses'
 import ChapterComplete from '@/components/gamification/ChapterComplete'
+import DiscussaoAncorada from '@/components/discussion/DiscussaoAncorada'
+import VersionPicker from '@/components/bible/VersionPicker'
+import { getVersaoPreferida } from '@/actions/bible-version'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,15 +16,28 @@ type PageProps = {
         book: string;
         chapter: string
     }>
+    searchParams: Promise<{ v?: string }>
 }
 
-export default async function ChapterPage({ params }: PageProps) {
+export default async function ChapterPage({ params, searchParams }: PageProps) {
     // --- A CORREÇÃO ESTÁ AQUI ---
     // No Next.js 15, você OBRIGATORIAMENTE precisa dar await em params
     const { book, chapter } = await params
+    const { v } = await searchParams
+
+    // Precedência da versão: o que a URL pede > a preferência salva do
+    // usuário > o padrão do catálogo (menor sort_order). A URL ganha para
+    // que um link compartilhado abra na versão que quem compartilhou viu.
+    const preferida = v ?? (await getVersaoPreferida()) ?? undefined
 
     // Agora as variáveis book e chapter têm valor real, e não 'undefined'
-    const data = await getChapter(book, parseInt(chapter))
+    const [data, versoes] = await Promise.all([
+        getChapter(book, parseInt(chapter), preferida),
+        listVersions(),
+    ])
+
+    // Sem isto, pular de capítulo devolveria o leitor para a versão padrão.
+    const sufixoVersao = v ? `?v=${v}` : ''
 
     return (
         <div className="max-w-2xl mx-auto pb-20">
@@ -31,15 +47,16 @@ export default async function ChapterPage({ params }: PageProps) {
                     {data.book.name} <span className="text-amber-600">{data.chapter}</span>
                 </h1>
 
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
+                    <VersionPicker versoes={versoes} atual={data.version} />
                     <Link
-                        href={data.prev ? `/leitura/${data.prev.bookSlug}/${data.prev.chapter}` : '#'}
+                        href={data.prev ? `/leitura/${data.prev.bookSlug}/${data.prev.chapter}${sufixoVersao}` : '#'}
                         className={`p-2 rounded-full hover:bg-stone-200 transition ${!data.prev && 'opacity-30 pointer-events-none'}`}
                     >
                         <ChevronLeft size={20} />
                     </Link>
                     <Link
-                        href={data.next ? `/leitura/${data.next.bookSlug}/${data.next.chapter}` : '#'}
+                        href={data.next ? `/leitura/${data.next.bookSlug}/${data.next.chapter}${sufixoVersao}` : '#'}
                         className={`p-2 rounded-full hover:bg-stone-200 transition ${!data.next && 'opacity-30 pointer-events-none'}`}
                     >
                         <ChevronRight size={20} />
@@ -47,40 +64,64 @@ export default async function ChapterPage({ params }: PageProps) {
                 </div>
             </div>
 
-            {/* Texto Bíblico */}
-            <div className="space-y-1">
-                {data.verses.map((verse) => {
-                    // Verifica se existe alguma nota para este versículo
-                    // Otimização: Em produção faríamos um Map/Set fora do loop, 
-                    // mas para 176 versículos (Salmo 119) ainda é ok.
-                    // Para o MVP não carregamos notas ainda nesse componente de server page,
-                    // vamos deixar hasNote={false} ou implementar o fetch de notas na page.
-                    // Como não pedi para buscar notas na page ainda, vamos deixar false ou buscar rapido.
-
-                    return (
-                        <InteractiveVerse
-                            key={verse.id}
-                            text={verse.text}
-                            verseNumber={verse.verse}
-                            bookSlug={book}
-                            chapter={parseInt(chapter)}
-                        // hasNote={notes.some(n => n.verse === verse.verse)} // TODO: Carregar notas
-                        />
-                    )
-                })}
+            {/* Texto Bíblico.
+                dir vem da versão: hebraico é RTL, e forçar LTR embaralharia
+                a leitura. */}
+            <div dir={data.version?.direction ?? 'ltr'}>
+                <ChapterVerses
+                    versiculosDoServidor={data.verses}
+                    bookSlug={book}
+                    chapter={parseInt(chapter)}
+                    versionSlug={data.version?.slug}
+                />
             </div>
 
             {/* ÁREA DE GAMIFICAÇÃO */}
             <ChapterComplete
                 bookSlug={book}
                 chapter={parseInt(chapter)}
-                nextUrl={data.next ? `/leitura/${data.next.bookSlug}/${data.next.chapter}` : null}
+                nextUrl={data.next ? `/leitura/${data.next.bookSlug}/${data.next.chapter}${sufixoVersao}` : null}
+            />
+
+            {/* Crédito da tradução.
+                Não é enfeite: A Bíblia Livre é CC BY 3.0 BR, e atribuição é
+                condição da licença. Sem isto na tela, o texto está no ar
+                fora dos termos. O conteúdo vem de bible_versions.attribution,
+                então cada versão declara o próprio crédito. */}
+            {data.version?.attribution && (
+                <p className="mt-8 border-t border-stone-200 pt-4 text-xs text-stone-400">
+                    {data.version.name}
+                    {data.version.abbreviation ? ` (${data.version.abbreviation})` : ''} — {data.version.attribution}
+                    {data.version.license_url && (
+                        <>
+                            {' '}
+                            <a
+                                href={data.version.license_url}
+                                target="_blank"
+                                rel="noopener noreferrer license"
+                                className="underline hover:text-stone-600"
+                            >
+                                Licença
+                            </a>
+                        </>
+                    )}
+                </p>
+            )}
+
+            {/* Discussão ancorada neste capítulo.
+                A âncora é `<livro>-<capítulo>`, o mesmo formato que
+                linkDaAncora() em /discussao/[id] sabe desmontar para
+                trazer o leitor de volta para cá. */}
+            <DiscussaoAncorada
+                anchorType="passage"
+                anchorRef={`${book}-${chapter}`}
+                titulo={`Conversa sobre ${data.book.name} ${chapter}`}
             />
 
             {/* Botão Próximo Gigante */}
             {data.next && (
                 <Link
-                    href={`/leitura/${data.next.bookSlug}/${data.next.chapter}`}
+                    href={`/leitura/${data.next.bookSlug}/${data.next.chapter}${sufixoVersao}`}
                     className="mt-12 block w-full bg-stone-900 text-amber-500 py-4 rounded-xl text-center font-bold hover:bg-stone-800 transition shadow-lg"
                 >
                     Próximo Capítulo →

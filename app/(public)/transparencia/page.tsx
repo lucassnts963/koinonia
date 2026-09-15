@@ -30,7 +30,7 @@ export default async function TransparenciaPage() {
                 <header className="text-center space-y-2">
                     <h1 className="text-4xl font-serif font-bold text-indigo-950">Transparência do Reino</h1>
                     <p className="text-gray-600">
-                        "Pois zelamos do que é honesto, não só diante do Senhor, mas também diante dos homens."
+                        &ldquo;Pois zelamos do que é honesto, não só diante do Senhor, mas também diante dos homens.&rdquo;
                         <br /><span className="text-xs font-semibold uppercase tracking-wider text-gray-400">2 Coríntios 8:21</span>
                     </p>
                 </header>

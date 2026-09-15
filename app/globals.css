@@ -3,6 +3,28 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Tamanho de fonte da leitura — a única preferência de Tenda que é real.
+   `data-font-size` é escrito em <html> por AplicarPreferencias.tsx a partir
+   do localStorage; nenhuma classe `dark:` é usada em componente nenhum do
+   app (só este scaffold), então o toggle de tema foi removido em vez de
+   fingir funcionar — ver docs/DARKMODE.md. */
+:root {
+  --leitura-escala-fonte: 1;
+}
+:root[data-font-size="sm"] { --leitura-escala-fonte: 0.875; }
+:root[data-font-size="base"] { --leitura-escala-fonte: 1; }
+:root[data-font-size="lg"] { --leitura-escala-fonte: 1.15; }
+:root[data-font-size="xl"] { --leitura-escala-fonte: 1.35; }
+
+.texto-biblico {
+  font-size: calc(1.125rem * var(--leitura-escala-fonte));
+}
+@media (min-width: 768px) {
+  .texto-biblico {
+    font-size: calc(1.25rem * var(--leitura-escala-fonte));
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

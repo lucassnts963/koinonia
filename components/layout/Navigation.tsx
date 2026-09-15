@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, BookOpen, Map, Users, PenTool, Network, Settings, LogOut } from 'lucide-react'
+import { Home, BookOpen, Map, Users, PenTool, Network, Settings, ShieldAlert, Library, Sparkles } from 'lucide-react'
 import KoinoniaLogo from '@/components/brand/KoinoniaLogo'
 
 const navItems = [
@@ -10,13 +10,33 @@ const navItems = [
     { name: 'Leitura', href: '/leitura', icon: BookOpen },
     { name: 'Jornada', href: '/jornada', icon: Map },
     { name: 'Estudos', href: '/estudos', icon: PenTool },
+    { name: 'Wiki', href: '/wiki', icon: Library },
+    { name: 'Agente', href: '/agente', icon: Sparkles },
     { name: 'Teia', href: '/teia', icon: Network },
     { name: 'Tribo', href: '/discipulado', icon: Users },
     { name: 'Tenda', href: '/config', icon: Settings },
 ]
 
-export default function Navigation({ user }: { user: any }) {
+const itemModeracao = { name: 'Moderação', href: '/moderacao', icon: ShieldAlert }
+
+type UsuarioDaNav = {
+    email?: string | null
+    user_metadata?: { username?: string | null } | null
+} | null
+
+export default function Navigation({
+    user,
+    mostrarModeracao = false,
+}: {
+    user: UsuarioDaNav
+    /** Só quem pastoreia alguma tribo tem fila de denúncias para ver. */
+    mostrarModeracao?: boolean
+}) {
     const pathname = usePathname()
+    const itens = mostrarModeracao
+        // Antes de "Tenda", que é o fim da lista por convenção.
+        ? [...navItems.slice(0, -1), itemModeracao, navItems[navItems.length - 1]]
+        : navItems
 
     return (
         <>
@@ -31,7 +51,7 @@ export default function Navigation({ user }: { user: any }) {
                 </div>
 
                 <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-                    {navItems.map((item) => {
+                    {itens.map((item) => {
                         const isActive = pathname.startsWith(item.href)
                         return (
                             <Link
@@ -62,7 +82,12 @@ export default function Navigation({ user }: { user: any }) {
             {/* Mobile Bottom Bar */}
             <nav className="md:hidden fixed bottom-0 left-0 w-full bg-stone-950/95 backdrop-blur border-t border-stone-800 z-50 pb-safe">
                 <div className="flex justify-around items-center p-2">
-                    {navItems.slice(0, 5).map((item) => { // Mostra só os 5 principais no mobile para caber
+                    {(mostrarModeracao
+                        // No mobile cabem 5. Uma denúncia pendente é mais urgente
+                        // que a Teia, então ela cede o lugar.
+                        ? [...navItems.slice(0, 4), itemModeracao]
+                        : navItems.slice(0, 5)
+                    ).map((item) => {
                         const isActive = pathname.startsWith(item.href)
                         return (
                             <Link

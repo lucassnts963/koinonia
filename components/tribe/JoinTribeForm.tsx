@@ -26,7 +26,10 @@ export default function JoinTribeForm() {
                 <UserPlus size={18} className="text-amber-600" />
                 Buscar Cobertura
             </h3>
-            <p className="text-xs text-stone-500 mb-3">Insira o "Nome de Usuário" do seu líder para entrar na tribo dele.</p>
+            <p className="text-xs text-stone-500 mb-3">
+                Insira o nome de usuário do seu líder. Você passa a ser discípulo dele
+                e entra na tribo dele.
+            </p>
 
             <div className="flex gap-2">
                 <input

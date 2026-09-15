@@ -1,0 +1,68 @@
+# =====================================================================
+# Koinonia — stack de produção para VPS
+#
+#   caddy  -> TLS automático (Let's Encrypt) + proxy reverso
+#   app    -> Next.js em modo standalone
+#
+# O banco/auth é o Supabase. Por padrão aponta para o Supabase gerenciado
+# (é o que o código já espera). Para subir o Supabase na mesma VPS, veja
+# docs/DEPLOY.md §4 e o overlay docker-compose.supabase.yml.
+#
+#   cp .env.example .env && $EDITOR .env
+#   docker compose up -d --build
+# =====================================================================
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Inlinados no bundle do cliente em tempo de build — trocar no .env
+        # exige `docker compose up -d --build`, não apenas restart.
+        NEXT_PUBLIC_SUPABASE_URL: "${NEXT_PUBLIC_SUPABASE_URL:?defina no .env}"
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: "${NEXT_PUBLIC_SUPABASE_ANON_KEY:?defina no .env}"
+    image: koinonia-app:latest
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      # Reafirmadas em runtime para o código do servidor.
+      NEXT_PUBLIC_SUPABASE_URL: "${NEXT_PUBLIC_SUPABASE_URL}"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "${NEXT_PUBLIC_SUPABASE_ANON_KEY}"
+      # Segredos: só existem em runtime, nunca na imagem.
+      SUPABASE_SERVICE_ROLE_KEY: "${SUPABASE_SERVICE_ROLE_KEY:?defina no .env}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+    expose:
+      - "3000"
+    networks:
+      - koinonia
+    # Sem `ports:` de propósito. A porta 3000 não fica exposta na internet;
+    # só o Caddy fala com o app, pela rede interna.
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      APP_DOMAIN: "${APP_DOMAIN:?defina no .env (ex: koinonia.example.com)}"
+      ACME_EMAIL: "${ACME_EMAIL:?defina no .env}"
+    volumes:
+      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data     # certificados — NÃO apague, tem rate limit no Let's Encrypt
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - koinonia
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  koinonia:
+    name: koinonia

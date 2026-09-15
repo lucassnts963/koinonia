@@ -31,7 +31,7 @@ export async function signUp(formData: FormData) {
 
     const supabase = await createClient()
 
-    const { error, data } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -48,24 +48,12 @@ export async function signUp(formData: FormData) {
         return { error: error.message }
     }
 
-    // Nota: A criação do perfil na tabela 'public.profiles' deve ser feita via Trigger no Postgres
-    // ou manualmente aqui se a trigger não existir, mas o ideal é Trigger para consistência.
-
-    // Vamos garantir a criação manual caso a trigger falhe ou não exista no MVP
-    if (data.user) {
-        const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-                id: data.user.id,
-                username: username,
-                stature: 'Neófito',
-                talents_balance: 0,
-                constancy_streak: 0
-            })
-        if (profileError) {
-            console.error('Erro ao criar perfil:', profileError)
-        }
-    }
+    // O perfil é criado pela trigger `on_auth_user_created` (migration
+    // 20260904130000), que lê username e full_name do metadata acima.
+    //
+    // O insert manual que existia aqui foi removido: ele escrevia
+    // talents_balance e constancy_streak, colunas que o cliente não pode
+    // mais tocar — a gamificação agora só é gravável pelo service role.
 
     return { success: 'Cadastro realizado! Verifique seu email (inclusive SPAM) para confirmar.' }
 }

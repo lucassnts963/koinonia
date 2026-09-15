@@ -11,7 +11,7 @@ type DailyVerseType = {
     text: string
     verse: number
     chapter: number
-    bible_books: { slug: string, name: string } | any
+    bible_books: { slug: string, name: string }
 }
 
 export default function DailyMana() {
@@ -36,7 +36,7 @@ export default function DailyMana() {
         // Se não tem ou mudou o dia, busca novo
         try {
             const newVerse = await getDailyVerse()
-            // @ts-ignore
+            // @ts-expect-error - o join de bible_books nao e inferido pelo client
             setVerse(newVerse)
             localStorage.setItem('daily_mana', JSON.stringify(newVerse))
             localStorage.setItem('daily_mana_date', today)

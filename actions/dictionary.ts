@@ -1,76 +1,156 @@
 'use server'
 
-import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { supabase } from '@/lib/supabaseClient'
-import OpenAI from 'openai'
+import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-})
+export type Verbete = {
+    id: number
+    term: string
+    definition: string
+    language_code: string
+    source: 'manual' | 'ai_generated'
+    status: 'draft' | 'published'
+    created_by: string | null
+    approved_by: string | null
+    aliases: string[]
+    sources: unknown[]
+    created_at: string
+}
 
-export async function getDefinition(term: string, language: string = 'pt-BR') {
+type ResultadoDefinicao =
+    | { success: true; data: Verbete; source: 'database' }
+    | { success: false; error: string }
 
+/**
+ * Busca um verbete publicado — sem chamada a IA. O cache de IA de antes
+ * desta mudança continua valendo (source = 'ai_generated', status =
+ * 'published'); o que muda é que nada novo é gerado assim. Sem verbete,
+ * quem chamou usa a Concordância (searchVersesByTerm) como alternativa —
+ * essa distinção é decidida na UI, não aqui.
+ *
+ * Tipo de retorno explícito de propósito: sem ele, o TypeScript infere
+ * `success` como `boolean` largo em vez do literal `true`/`false` de cada
+ * `return`, e a união deixa de discriminar — `resultado.success ? resultado.data
+ * : null` passava a achar `data` "possivelmente undefined" mesmo depois do
+ * `if`.
+ */
+export async function getDefinition(term: string, language: string = 'pt-BR'): Promise<ResultadoDefinicao> {
+    const supabase = await createClient()
 
-    // 1. Tenta buscar no banco (Cache First)
-    // Usamos ilike para ignorar maiúsculas/minúsculas
-    const { data: existingEntry } = await supabase
+    const { data, error } = await supabase
         .from('dictionary_entries')
         .select('*')
         .ilike('term', term)
         .eq('language_code', language)
+        .eq('status', 'published')
+        .maybeSingle()
+
+    if (error) {
+        console.error('[getDefinition]', error)
+        return { success: false, error: 'Não foi possível buscar o verbete.' }
+    }
+    if (!data) {
+        return { success: false, error: 'Nenhuma definição encontrada.' }
+    }
+    return { success: true, data: data as Verbete, source: 'database' as const }
+}
+
+/** Rascunhos do próprio usuário e — se ele pastoreia alguma tribo — os de todo mundo, para revisar. */
+export async function listarVerbetesPendentes(): Promise<Verbete[]> {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('dictionary_entries')
+        .select('*')
+        .eq('status', 'draft')
+        .order('created_at', { ascending: false })
+
+    if (error) {
+        console.error('[listarVerbetesPendentes]', error)
+        return []
+    }
+    return (data ?? []) as Verbete[]
+}
+
+export async function proporVerbete(input: {
+    term: string
+    definition: string
+    language?: string
+    aliases?: string[]
+    sources?: { titulo: string; url?: string }[]
+}) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, message: 'Faça login novamente.' }
+
+    const term = input.term.trim()
+    const definition = input.definition.trim()
+    if (term.length < 2) return { success: false, message: 'Digite o termo.' }
+    if (definition.length < 10) return { success: false, message: 'Escreva uma definição com ao menos 10 caracteres.' }
+
+    const { data, error } = await supabase
+        .from('dictionary_entries')
+        .insert({
+            term,
+            definition,
+            language_code: input.language ?? 'pt-BR',
+            aliases: input.aliases ?? [],
+            sources: input.sources ?? [],
+            created_by: user.id,
+        })
+        .select('id')
         .single()
 
-    if (existingEntry) {
-        return { success: true, data: existingEntry, source: 'database' }
+    if (error) {
+        console.error('[proporVerbete]', error)
+        // term é unique — colisão é o caso mais comum de erro aqui.
+        const duplicado = error.code === '23505'
+        return {
+            success: false,
+            message: duplicado ? 'Já existe um verbete com esse termo.' : 'Não foi possível propor o verbete.',
+        }
     }
 
-    // 2. Se não achou, chama a IA (Fallback)
-    try {
-        const aiResponse = await openai.chat.completions.create({
-            model: "gpt-4o-mini", // Modelo rápido e barato
-            messages: [
-                {
-                    role: "system",
-                    content: `You are a biblical scholar and theologian assistant.
-Output format:
-**Original:** [Hebrew/Greek Word] (*Transliteration*) - [Literal Meaning]
-**Definição:** [Concise theological definition in max 3 sentences]
+    revalidatePath('/wiki')
+    return { success: true, message: 'Verbete proposto — aguardando aprovação da liderança.', id: data.id as number }
+}
 
-Requirements:
-1. Identify the primary original root word (Hebrew for OT concepts, Greek for NT concepts).
-2. Provide the literal etymological meaning.
-3. Provide a concise theological definition.
-4. Language: ${language || 'pt-BR'}.`
-                },
-                {
-                    role: "user",
-                    content: `Analyze the term "${term}" strictly within a biblical context.`
-                }
-            ],
-            temperature: 0.3, // Baixa criatividade para evitar alucinações teológicas
-        })
+export async function aprovarVerbete(id: number) {
+    const supabase = await createClient()
+    const { error } = await supabase.rpc('aprovar_verbete', { entry_id: id })
 
-        const definition = aiResponse.choices[0].message.content
-
-        // 3. Salva no banco para o futuro (Memoization)
-
-        const { data: newEntry, error } = await supabaseAdmin
-            .from('dictionary_entries')
-            .insert({
-                term: term, // Capitalize se quiser padronizar
-                definition: definition,
-                language_code: language,
-                source: 'ai_generated'
-            })
-            .select()
-            .single()
-
-        if (error) throw error
-
-        return { success: true, data: newEntry, source: 'ai' }
-
-    } catch (error) {
-        console.error("Dictionary Error:", error)
-        return { success: false, error: "Could not define term" }
+    if (error) {
+        console.error('[aprovarVerbete]', error)
+        return { success: false, message: error.message ?? 'Não foi possível aprovar.' }
     }
+
+    revalidatePath('/wiki')
+    return { success: true, message: 'Verbete publicado.' }
+}
+
+export async function apagarRascunho(id: number) {
+    const supabase = await createClient()
+    const { error } = await supabase.from('dictionary_entries').delete().eq('id', id).eq('status', 'draft')
+
+    if (error) {
+        console.error('[apagarRascunho]', error)
+        return { success: false, message: 'Não foi possível apagar.' }
+    }
+
+    revalidatePath('/wiki')
+    return { success: true, message: 'Rascunho removido.' }
+}
+
+export async function listarVerbetesPublicados(): Promise<Verbete[]> {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('dictionary_entries')
+        .select('*')
+        .eq('status', 'published')
+        .order('term')
+
+    if (error) {
+        console.error('[listarVerbetesPublicados]', error)
+        return []
+    }
+    return (data ?? []) as Verbete[]
 }

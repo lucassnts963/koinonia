@@ -17,7 +17,7 @@ export default async function DevocionalPage() {
     return (
         <div className="space-y-6 pb-20">
             <header className="flex items-center gap-3">
-                <Link href="/app" className="p-2 -ml-2 text-stone-400 hover:text-stone-800 hover:bg-stone-100 rounded-lg transition">
+                <Link href="/dashboard" className="p-2 -ml-2 text-stone-400 hover:text-stone-800 hover:bg-stone-100 rounded-lg transition">
                     <ArrowLeft size={24} />
                 </Link>
                 <div>

@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/actions/auth'
 import OfflineManager from '@/components/tenda/OfflineManager'
-import { Settings, User, LogOut, Moon, Sun, Type } from 'lucide-react'
+import AparenciaLeitura from '@/components/tenda/AparenciaLeitura'
+import { Settings, User, LogOut } from 'lucide-react'
 
 // Server Action temporária para o botão de sair
 // Em projetos reais, isso estaria no actions/auth.ts
@@ -55,39 +56,9 @@ export default async function TendaPage() {
                 <OfflineManager />
             </section>
 
-            {/* 3. Configurações de Leitura (Mock Visual) */}
-            <section className="bg-white p-6 rounded-xl border border-stone-200 shadow-sm opacity-60 relative">
-                <div className="absolute top-2 right-2 bg-stone-200 text-stone-600 text-[10px] px-2 py-1 rounded font-bold uppercase">
-                    Em Breve
-                </div>
-                <h3 className="font-bold text-stone-800 mb-4 flex items-center gap-2">
-                    <Type size={18} /> Aparência da Leitura
-                </h3>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <span className="text-xs text-stone-500">Tamanho da Fonte</span>
-                        <div className="flex items-center gap-2 bg-stone-50 p-2 rounded-lg border border-stone-100">
-                            <button className="p-2 hover:bg-white rounded shadow-sm text-xs">Aa</button>
-                            <div className="flex-1 h-1 bg-stone-200 rounded">
-                                <div className="w-1/2 h-full bg-amber-500 rounded"></div>
-                            </div>
-                            <button className="p-2 hover:bg-white rounded shadow-sm text-lg font-bold">Aa</button>
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <span className="text-xs text-stone-500">Tema</span>
-                        <div className="flex gap-2">
-                            <button className="flex-1 p-2 bg-stone-50 border border-amber-500 rounded text-stone-800 flex justify-center">
-                                <Sun size={18} />
-                            </button>
-                            <button className="flex-1 p-2 bg-stone-900 border border-stone-800 rounded text-stone-400 flex justify-center">
-                                <Moon size={18} />
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            {/* 3. Aparência da Leitura — real agora, não decorativo */}
+            <section>
+                <AparenciaLeitura />
             </section>
 
             {/* 4. Zona de Perigo / Logout */}

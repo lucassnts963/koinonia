@@ -31,7 +31,9 @@ export async function getReadingStats() {
     let countOT = 0
     let countNT = 0
 
-    history.forEach((entry: any) => {
+    type LinhaDeHistorico = { bible_books: { testament: string } }
+
+    ;(history as unknown as LinhaDeHistorico[]).forEach((entry) => {
         if (entry.bible_books.testament === 'OT' || entry.bible_books.testament === 'VT') {
             countOT++
         } else {

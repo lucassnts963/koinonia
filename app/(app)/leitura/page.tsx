@@ -58,7 +58,7 @@ export default async function BibleIndexPage() {
                     >
                         <div>
                             <p className="font-serif font-bold text-stone-800 text-lg group-hover:text-amber-800">
-                                {/* @ts-ignore - Supabase type join issue */}
+                                {/* @ts-expect-error - join do Supabase nao e inferido aqui */}
                                 {lastRead.bible_books?.name} {lastRead.chapter}
                             </p>
                             <p className="text-xs text-stone-500">
