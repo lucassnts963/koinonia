@@ -77,7 +77,7 @@ export default async function DashboardPage() {
 
             {/* === Card de Acesso ao Devocional === */}
             <section>
-                <Link href="/app/devocional" className="group block">
+                <Link href="/devocional" className="group block">
                     <div className="bg-gradient-to-br from-amber-600 to-amber-800 rounded-xl p-6 text-white shadow-md shadow-amber-900/20 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 relative overflow-hidden">
 
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
