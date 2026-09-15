@@ -73,7 +73,6 @@ export default function QuickReader({ onClose, onInsertReference, className = ""
             loadChapter('gn', 1)
         }
         init()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     // Troca o livro (abre o grid automaticamente para escolher o capítulo)

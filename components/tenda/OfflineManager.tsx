@@ -28,11 +28,28 @@ export default function OfflineManager() {
     }
 
     // 1. Ao carregar, verifica se já tem dados no Dexie.
-    // O efeito vem depois de checkStatus pelo mesmo motivo do QuickReader:
-    // não depender de hoisting de declaração de função.
+    //
+    // O efeito vem depois de checkStatus para não depender de hoisting, e a
+    // leitura fica inline com uma guarda de montagem: se o usuário sair da
+    // Tenda antes de o IndexedDB responder, o setState cairia num componente
+    // já desmontado.
     useEffect(() => {
-        checkStatus()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        let montado = true
+
+        async function verificar() {
+            try {
+                const c = await db.verses.count()
+                if (!montado) return
+                setCount(c)
+                setStatus(c > 30000 ? 'ready' : 'empty')
+            } catch (e) {
+                console.error(e)
+                if (montado) setStatus('empty')
+            }
+        }
+
+        verificar()
+        return () => { montado = false }
     }, [])
 
     // 2. Lógica de Download e Processamento

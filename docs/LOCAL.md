@@ -85,35 +85,42 @@ Mailpit local (`npm run db:start` imprime a URL).
 ## 6. Ver a discussão funcionando
 
 A discussão nasce **dentro de uma tribo** — não existe praça pública onde
-qualquer um abre tema. Para testar, você precisa de uma tribo e de ser
-membro dela. Com o app rodando, no SQL local:
+qualquer um abre tema. Com o app rodando, em `/discipulado`:
 
-```bash
-psql postgresql://postgres:postgres@127.0.0.1:54322/postgres
-```
+1. **Criar uma tribo** (você vira o líder) ou **entrar por código**, se alguém
+   já te passou um. O código de convite aparece na tela de quem lidera.
+2. Aceitar um mentor em "Buscar Cobertura" também coloca você na tribo dele —
+   é a mesma porta, e ela grava as duas coisas.
 
-```sql
--- pegue seu id
-select id, username from profiles;
-
--- crie a tribo e entre nela como líder
-with nova as (
-  insert into tribes (name, slug, leader_id, invite_code)
-  values ('Célula Teste', 'celula-teste', '<SEU_ID>', 'TESTE123')
-  returning id
-)
-insert into tribe_members (tribe_id, user_id, role)
-select id, '<SEU_ID>', 'leader' from nova;
-```
-
-Agora abra qualquer capítulo (`/leitura/gn/1`) e role até o fim: o bloco
+Com tribo, abra qualquer capítulo (`/leitura/gn/1`) e role até o fim: o bloco
 "Conversa sobre Gênesis 1" aparece com o botão de abrir discussão. Publicar
-leva para `/discussao/<id>`, com respostas (um nível de aninhamento),
-reações (`edificante`, `me_ajudou`, `orando` — não existe voto negativo),
-marcar resposta e denunciar.
+leva para `/discussao/<id>`, com respostas (um nível de aninhamento), reações
+(`edificante`, `me_ajudou`, `orando` — não existe voto negativo), marcar
+resposta e denunciar.
+
+Clicando no número de um versículo há também "Discutir com a tribo", que
+ancora a conversa naquele versículo específico.
 
 Sem tribo, o bloco mostra o convite para entrar em uma. Isso é o
 comportamento correto, não um bug.
+
+### Moderação
+
+Denunciar um conteúdo manda para a fila da liderança da tribo. Se você é
+líder ou pastor, `/moderacao` aparece na navegação com a fila, e cada
+denúncia tem três desfechos: sem problema, ocultar, ou arquivar a discussão.
+Nada disso mexe em Talentos ou ranking — é canal de pastoreio.
+
+### Acervo
+
+Em `/estudos`, cada estudo tem "Publicar no acervo". O estudo publicado vira
+uma discussão pública em `/acervo`, aberta a quem não é da sua tribo. É o
+único caminho para o acervo: nada nasce lá.
+
+### Versões da Bíblia
+
+Se você semeou mais de uma versão (passo 4), o seletor aparece no topo do
+capítulo. A escolha vira `?v=<slug>` na URL e fica gravada no seu perfil.
 
 ## Comandos
 

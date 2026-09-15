@@ -219,3 +219,14 @@ Ordem de prioridade, herdadas do handoff:
   coluna (RLS decide linhas, nunca colunas). **Ainda não aplicado em
   produção** — rode `supabase db push` antes de abrir para usuários, e
   leia o aviso sobre grants amplos na seção Migrations.
+
+- **Nada desta branch está em produção.** São onze migrations e o projeto
+  Supabase esteve pausado (free tier pausa após 7 dias sem uso). Até o
+  `db push`, a produção não tem tribos como entidade, não tem moderação, e
+  continua com os Talentos auto-emitíveis.
+
+- **Rodar o app no navegador.** Nenhuma tela desta leva foi clicada: Auth e
+  PostgREST exigem os contêineres do Supabase, e o registry está bloqueado
+  na rede onde este trabalho foi feito. Tudo que é RLS e SQL foi provado
+  contra um PostgreSQL 16 real; o que é renderização está provado só por
+  `tsc` e `next build`. `docs/LOCAL.md` é o caminho para você validar.
