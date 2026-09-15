@@ -1,0 +1,78 @@
+%% Modelo de dados do Koinonia.
+%% Para abrir no draw.io: Extras > Editar diagrama, ou Organizar > Inserir > Mermaid.
+erDiagram
+    profiles ||--o{ profiles : "mentor_id (discipulado 1:1)"
+    profiles ||--o{ tribe_members : "é membro de"
+    tribes   ||--o{ tribe_members : "tem"
+    profiles ||--o{ tribes : "leader_id lidera"
+
+    tribes      ||--o{ discussions : "escopa (tribe_id)"
+    profiles    ||--o{ discussions : "autor"
+    discussions ||--o{ discussion_replies : "1 nível por trigger"
+    discussion_replies ||--o{ discussion_replies : "parent_id"
+
+    discussions        ||--o{ discussion_flags : "alvo polimórfico"
+    discussion_replies ||--o{ discussion_flags : "alvo polimórfico"
+    profiles           ||--o{ discussion_flags : "denunciante"
+
+    discussions        ||--o{ reactions : "alvo polimórfico"
+    discussion_replies ||--o{ reactions : "alvo polimórfico"
+
+    profiles ||--o{ studies : "privado por user_id"
+    studies  ||--o| discussions : "publishStudy → acervo"
+
+    bible_versions ||--o{ bible_verses : "version_id"
+    bible_books    ||--o{ bible_verses : "book_id"
+    bible_books    ||--o{ bible_book_names : "nome por idioma"
+    bible_versions ||--o{ bible_version_grants : "acesso a licenciada"
+    profiles       ||--o{ bible_version_grants : "concessão"
+
+    profiles {
+        uuid id PK
+        text username "cliente ESCREVE"
+        text full_name "cliente ESCREVE"
+        uuid mentor_id FK "cliente ESCREVE - 1:1"
+        text preferred_bible_version "cliente ESCREVE"
+        int talents_balance "SÓ service_role"
+        int stature_level "SÓ service_role"
+        int constancy_streak "SÓ service_role"
+    }
+    tribes {
+        uuid id PK
+        text name
+        text invite_code UK "porta de entrada"
+        uuid leader_id FK
+        bool is_public "padrão false"
+    }
+    tribe_members {
+        uuid tribe_id PK
+        uuid user_id PK
+        text role "member shepherd leader"
+    }
+    discussions {
+        uuid id PK
+        uuid tribe_id FK "NULL = acervo público"
+        text anchor_type "verse passage study term plan_day"
+        text anchor_ref "gn-1:1 ou study-uuid"
+        text status "open answered archived flagged"
+        timestamptz deleted_at "ocultado pela liderança"
+    }
+    discussion_flags {
+        text target_type "discussion ou reply"
+        uuid target_id "sem FK - resolvido por tribo_do_alvo()"
+        uuid resolved_by FK
+    }
+    reactions {
+        text kind "edificante me_ajudou orando"
+    }
+    bible_versions {
+        text slug UK
+        text license "public_domain cc_by licensed"
+        text attribution "CC BY exige exibir"
+        text search_config "fts por idioma"
+        bool is_enabled
+    }
+    bible_books {
+        int id PK "1..66 canônico"
+        text slug UK "gn sl - NUNCA muda"
+    }
