@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { openDevotionalDay } from '@/actions/devotional'
+import { openDevotionalDay, getMonthDevotionals } from '@/actions/devotional'
 import { ChevronLeft, ChevronRight, Loader2, Calendar as CalIcon } from 'lucide-react'
 
 type DevotionalSummary = {
@@ -20,6 +20,11 @@ export default function CalendarGrid({
     currentMonth: number
 }) {
     const [date, setDate] = useState(new Date(currentYear, currentMonth - 1))
+    // Antes, trocar de mês só mudava a grade — os pontinhos de "já tem
+    // devocional" continuavam vindo de `initialData`, do mês em que a
+    // página carregou. Navegar para outro mês nunca buscava dados novos.
+    const [dados, setDados] = useState(initialData)
+    const [carregandoMes, setCarregandoMes] = useState(false)
     const [loadingDay, setLoadingDay] = useState<string | null>(null)
 
     // Helpers de Data
@@ -28,9 +33,20 @@ export default function CalendarGrid({
 
     const monthName = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
 
+    const irPara = async (novaData: Date) => {
+        setDate(novaData)
+        setCarregandoMes(true)
+        try {
+            const novosDados = await getMonthDevotionals(novaData.getFullYear(), novaData.getMonth() + 1)
+            setDados(novosDados)
+        } finally {
+            setCarregandoMes(false)
+        }
+    }
+
     // Navegação
-    const prevMonth = () => setDate(new Date(date.getFullYear(), date.getMonth() - 1))
-    const nextMonth = () => setDate(new Date(date.getFullYear(), date.getMonth() + 1))
+    const prevMonth = () => irPara(new Date(date.getFullYear(), date.getMonth() - 1))
+    const nextMonth = () => irPara(new Date(date.getFullYear(), date.getMonth() + 1))
 
     // Ação de Clique no Dia
     const handleDayClick = async (day: number) => {
@@ -48,7 +64,7 @@ export default function CalendarGrid({
         const dayStr = String(day).padStart(2, '0')
         const fullDate = `${date.getFullYear()}-${monthStr}-${dayStr}`
 
-        return initialData.find(d => d.scheduled_date === fullDate)
+        return dados.find(d => d.scheduled_date === fullDate)
     }
 
     // Dias da semana
@@ -59,14 +75,14 @@ export default function CalendarGrid({
             {/* Header do Calendário */}
             <div className="p-4 flex items-center justify-between border-b border-stone-100 bg-stone-50">
                 <h2 className="font-serif font-bold text-stone-800 capitalize flex items-center gap-2">
-                    <CalIcon className="text-amber-600" size={20} />
+                    {carregandoMes ? <Loader2 className="animate-spin text-amber-600" size={20} /> : <CalIcon className="text-amber-600" size={20} />}
                     {monthName}
                 </h2>
                 <div className="flex gap-1">
-                    <button onClick={prevMonth} className="p-2 hover:bg-stone-200 rounded-lg text-stone-500">
+                    <button onClick={prevMonth} disabled={carregandoMes} className="p-2 hover:bg-stone-200 rounded-lg text-stone-500 disabled:opacity-40">
                         <ChevronLeft size={20} />
                     </button>
-                    <button onClick={nextMonth} className="p-2 hover:bg-stone-200 rounded-lg text-stone-500">
+                    <button onClick={nextMonth} disabled={carregandoMes} className="p-2 hover:bg-stone-200 rounded-lg text-stone-500 disabled:opacity-40">
                         <ChevronRight size={20} />
                     </button>
                 </div>

@@ -3,26 +3,12 @@ import Link from 'next/link'
 import { ChevronLeft, MessageSquare, Anchor } from 'lucide-react'
 import { getDiscussion, getMyReactions } from '@/actions/discussion'
 import { createClient } from '@/lib/supabase/server'
+import { linkDaAncora } from '@/lib/discussao'
 import DiscussionThread, { type Resposta } from '@/components/discussion/DiscussionThread'
 import ReactionBar from '@/components/discussion/ReactionBar'
 import Autor from '@/components/discussion/Autor'
 
 export const dynamic = 'force-dynamic'
-
-// A âncora é o motivo de a discussão existir: todo tema nasce preso a um
-// objeto do app. O link de volta é o que impede isto de virar fórum.
-function linkDaAncora(tipo: string, ref: string): { href: string; rotulo: string } | null {
-    if (tipo === 'verse' || tipo === 'passage') {
-        // 'gn-1' ou 'gn-1:1'
-        const [livro, resto] = ref.split('-')
-        const capitulo = resto?.split(':')[0]
-        if (livro && capitulo) {
-            return { href: `/leitura/${livro}/${capitulo}`, rotulo: `${livro.toUpperCase()} ${resto}` }
-        }
-    }
-    if (tipo === 'study') return { href: `/estudos`, rotulo: 'Estudo publicado' }
-    return null
-}
 
 export default async function DiscussaoPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params

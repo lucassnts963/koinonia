@@ -10,16 +10,25 @@ export async function getMonthDevotionals(year: number, month: number) {
 
     // Formata para buscar o mês inteiro (ex: '2023-10-01' a '2023-10-31')
     // Nota: Mês em JS começa em 0, mas aqui esperamos o número real (1-12)
+    //
+    // O fim do mês NÃO pode ser "-31" fixo: meses de 30 dias (abril, junho,
+    // setembro, novembro) e fevereiro (28/29) fazem o Postgres rejeitar a
+    // data com "date/time field value out of range" — a tela inteira
+    // quebrava em qualquer mês assim, não só em alguns casos raros.
+    // `new Date(year, month, 0)` é o dia 0 do mês seguinte, ou seja, o
+    // último dia real do mês pedido.
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`
-    const endDate = `${year}-${String(month).padStart(2, '0')}-31`
+    const ultimoDia = new Date(year, month, 0).getDate()
+    const endDate = `${year}-${String(month).padStart(2, '0')}-${String(ultimoDia).padStart(2, '0')}`
 
-    const { data } = await supabase
+    const { data, error } = await supabase
         .from('studies')
         .select('id, title, scheduled_date, created_at')
         .eq('user_id', user.id)
         .gte('scheduled_date', startDate)
         .lte('scheduled_date', endDate)
 
+    if (error) console.error('[getMonthDevotionals]', error)
     return data || []
 }
 

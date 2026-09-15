@@ -356,6 +356,46 @@ export async function listMyTribes() {
         .filter((t) => t.id)
 }
 
+export type DiscussaoDaTribo = {
+    id: string
+    title: string
+    body: string
+    anchor_type: AnchorType
+    anchor_ref: string
+    reply_count: number | null
+    edifying_count: number | null
+    last_activity_at: string
+    author: { username: string | null; stature: string | null } | null
+}
+
+/**
+ * Feed de tudo que a tribo está discutindo, atravessando âncoras — sem
+ * isto, a única forma de ver uma discussão era já saber em qual capítulo
+ * ou estudo ela nasceu. RLS de `discussions` já escopa por tribo
+ * (`is_tribe_member`), então isto é só juntar num feed em vez de forçar a
+ * pessoa a abrir capítulo por capítulo.
+ */
+export async function listarDiscussoesDaTribo(triboId: string): Promise<DiscussaoDaTribo[]> {
+    const supabase = await createClient()
+
+    const { data, error } = await supabase
+        .from('discussions')
+        .select(`
+            id, title, body, anchor_type, anchor_ref, reply_count, edifying_count, last_activity_at,
+            author:author_id ( username, stature )
+        `)
+        .eq('tribe_id', triboId)
+        .is('deleted_at', null)
+        .order('last_activity_at', { ascending: false })
+        .limit(50)
+
+    if (error) {
+        console.error('[listarDiscussoesDaTribo]', error)
+        return []
+    }
+    return (data ?? []) as unknown as DiscussaoDaTribo[]
+}
+
 /**
  * Reações do usuário atual sobre um conjunto de alvos.
  *

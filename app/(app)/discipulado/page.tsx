@@ -50,11 +50,16 @@ export default async function DiscipuladoPage() {
                             </div>
 
                             <p className="mt-4 border-t border-stone-100 pt-4 text-xs text-stone-500">
-                                As discussões nascem aqui dentro. Abra um capítulo e role até o fim
-                                para conversar com sua tribo sobre o texto.{' '}
-                                <Link href="/leitura" className="font-bold text-amber-700 hover:underline">
-                                    Ir para a leitura
+                                As discussões nascem dentro de um capítulo, estudo ou termo — mas
+                                você não precisa ir atrás de onde cada uma começou.{' '}
+                                <Link href="/discussao/tribo" className="font-bold text-amber-700 hover:underline">
+                                    Ver discussões da tribo
                                 </Link>
+                                {' '}ou{' '}
+                                <Link href="/leitura" className="font-bold text-amber-700 hover:underline">
+                                    ir para a leitura
+                                </Link>
+                                {' '}para começar uma nova.
                             </p>
                         </div>
 
@@ -66,9 +71,11 @@ export default async function DiscipuladoPage() {
                             liderId={tribo.leader_id}
                         />
 
-                        {souLideranca && (
-                            <InviteCard codigo={tribo.invite_code} nomeDaTribo={tribo.name} />
-                        )}
+                        {/* Convidar é ação de qualquer membro, não só de quem lidera —
+                            o código identifica a tribo, não quem convidou. RLS de
+                            `tribes` já libera a leitura do invite_code para qualquer
+                            membro (is_tribe_member), então isto é só liberar a UI. */}
+                        <InviteCard codigo={tribo.invite_code} nomeDaTribo={tribo.name} />
                     </div>
                 ) : (
                     <div className="space-y-3">
