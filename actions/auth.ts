@@ -18,8 +18,15 @@ export async function signIn(formData: FormData) {
         return { error: 'Credenciais inválidas. Verifique seu email e senha.' }
     }
 
-    // Se tudo certo, redireciona
-    redirect('/dashboard')
+    // Sem redirect() aqui de propósito: esta função é chamada a partir de
+    // app/(auth)/login/page.tsx dentro de um try/catch manual no cliente
+    // (não como `action` direto de um <form>). redirect() funciona
+    // lançando uma exceção especial — o catch local a intercepta antes do
+    // Next.js tratá-la, e mostra "Ocorreu um erro inesperado" mesmo o
+    // login (e o redirecionamento por baixo) tendo dado certo. Quem
+    // decide navegar agora é o cliente, com router.push, fora de qualquer
+    // try/catch.
+    return { success: true }
 }
 
 export async function signUp(formData: FormData) {
@@ -35,7 +42,10 @@ export async function signUp(formData: FormData) {
         email,
         password,
         options: {
-            emailRedirectTo: `${origin}/auth/callback`,
+            // A rota real é app/(auth)/callback/route.ts -> /callback, não
+            // /auth/callback (que nunca existiu). O link de confirmação por
+            // e-mail dava 404 antes desta correção.
+            emailRedirectTo: `${origin}/callback`,
             data: {
                 username: username,
                 full_name: fullName,
