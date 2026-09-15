@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { searchBible } from '@/actions/study'
+import { searchBible, type VersiculoEncontrado } from '@/actions/study'
 import { Loader2, Search, PlusCircle, Book, X } from 'lucide-react'
 
 export default function BibleSearchSidebar({
@@ -17,7 +17,7 @@ export default function BibleSearchSidebar({
 }) {
     const [query, setQuery] = useState('')
     const [loading, setLoading] = useState(false)
-    const [results, setResults] = useState<any[]>([])
+    const [results, setResults] = useState<VersiculoEncontrado[]>([])
 
     const handleSearch = async () => {
         if (!query) return
@@ -75,7 +75,7 @@ export default function BibleSearchSidebar({
                             </button>
                         </div>
                         <p className="text-stone-700 font-serif leading-relaxed text-sm">
-                            "{r.text}"
+                            &ldquo;{r.text}&rdquo;
                         </p>
                     </div>
                 ))}

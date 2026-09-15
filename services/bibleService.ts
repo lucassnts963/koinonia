@@ -144,7 +144,9 @@ export const getChapter = cache(async (bookSlug: string, chapter: number, versio
 })
 
 // Helpers de Navegação (Precisam receber o client agora)
-async function getNextNav(supabase: any, book: BibleBook, currentChapter: number) {
+type ClientePublico = ReturnType<typeof getPublicClient>
+
+async function getNextNav(supabase: ClientePublico, book: BibleBook, currentChapter: number) {
     const { count } = await supabase
         .from('bible_verses')
         .select('id', { count: 'exact', head: true })
@@ -168,7 +170,7 @@ async function getNextNav(supabase: any, book: BibleBook, currentChapter: number
     return null
 }
 
-async function getPrevNav(supabase: any, book: BibleBook, currentChapter: number) {
+async function getPrevNav(supabase: ClientePublico, book: BibleBook, currentChapter: number) {
     if (currentChapter > 1) {
         return { bookSlug: book.slug, chapter: currentChapter - 1 }
     }

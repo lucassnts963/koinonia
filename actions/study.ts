@@ -3,7 +3,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export async function searchBible(query: string) {
+export type VersiculoEncontrado = {
+    id: number
+    verse: number
+    chapter: number
+    text: string
+    bible_books: { slug: string; name: string }
+}
+
+export async function searchBible(query: string): Promise<VersiculoEncontrado[]> {
     const supabase = await createClient()
 
     // Usando textSearch para busca correta com tsvector
@@ -17,7 +25,7 @@ export async function searchBible(query: string) {
         console.error(error)
         return []
     }
-    return data
+    return (data ?? []) as unknown as VersiculoEncontrado[]
 }
 
 // --- READ ---

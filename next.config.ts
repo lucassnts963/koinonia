@@ -1,11 +1,14 @@
 import type { NextConfig } from "next";
+import withPWAInit from "@ducanh2912/next-pwa";
 
-const withPWA = require("@ducanh2912/next-pwa").default({
+const withPWA = withPWAInit({
   dest: "public",
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: true,
-  swcMinify: true,
+  // `swcMinify` foi removido: não existe em PluginOptions. Sob `require()`
+  // o objeto não era tipado, então a opção era ignorada em silêncio desde
+  // sempre — o import tipado é que a denunciou.
   disable: process.env.NODE_ENV === "development",
   workboxOptions: {
     disableDevLogs: true,

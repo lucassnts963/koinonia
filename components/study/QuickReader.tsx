@@ -22,28 +22,26 @@ type QuickReaderProps = {
     className?: string
 }
 
+type LivroDaLista = { id: number; slug: string; name: string; testament?: string }
+type VersiculoDoCapitulo = { id: number; verse: number; text: string }
+type CapituloCarregado = {
+    bookName: string
+    chapter: number
+    verses: VersiculoDoCapitulo[]
+    totalChapters?: number
+}
+
 export default function QuickReader({ onClose, onInsertReference, className = "" }: QuickReaderProps) {
     // Estados de Dados
-    const [books, setBooks] = useState<any[]>([])
+    const [books, setBooks] = useState<LivroDaLista[]>([])
     const [currentBook, setCurrentBook] = useState('gn')
     const [currentChapter, setCurrentChapter] = useState(1)
-    const [chapterData, setChapterData] = useState<any>(null)
+    const [chapterData, setChapterData] = useState<CapituloCarregado | null>(null)
 
     // Estados de UI
     const [view, setView] = useState<'read' | 'grid'>('read') // Alterna entre Ler Texto e Escolher Capítulo
     const [loading, setLoading] = useState(false)
     const [loadingBooks, setLoadingBooks] = useState(true)
-
-    // Inicialização
-    useEffect(() => {
-        async function init() {
-            const b = await fetchBooksList()
-            setBooks(b)
-            setLoadingBooks(false)
-            loadChapter('gn', 1)
-        }
-        init()
-    }, [])
 
     // Carrega o texto do capítulo
     async function loadChapter(book: string, chapter: number) {
@@ -60,6 +58,23 @@ export default function QuickReader({ onClose, onInsertReference, className = ""
         }
         setLoading(false)
     }
+
+    // Inicialização.
+    //
+    // O efeito fica DEPOIS de loadChapter de propósito: declaração de função é
+    // hoisted e funcionava, mas o compilador do React não garante essa ordem
+    // em toda transformação, e chamar antes de declarar é um erro esperando
+    // acontecer.
+    useEffect(() => {
+        async function init() {
+            const b = await fetchBooksList()
+            setBooks(b)
+            setLoadingBooks(false)
+            loadChapter('gn', 1)
+        }
+        init()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     // Troca o livro (abre o grid automaticamente para escolher o capítulo)
     const handleBookChange = (bookSlug: string) => {
@@ -178,7 +193,7 @@ export default function QuickReader({ onClose, onInsertReference, className = ""
                                 <h4 className="font-serif font-bold text-xl text-stone-800 text-center mb-4 sticky top-0 bg-white/95 backdrop-blur py-2 border-b border-stone-100 z-10">
                                     {chapterData.bookName} {chapterData.chapter}
                                 </h4>
-                                {chapterData.verses.map((v: any) => (
+                                {chapterData.verses.map((v) => (
                                     <p
                                         key={v.id}
                                         className="text-stone-700 leading-relaxed hover:bg-amber-100 p-2 rounded cursor-pointer transition-colors text-sm md:text-base border-l-2 border-transparent hover:border-amber-400"

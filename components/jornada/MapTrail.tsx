@@ -7,12 +7,24 @@ import Link from 'next/link'
 // Componente Visual de Trilha Sinuosa (Cobrinha)
 // Usa SVG Path para desenhar a linha e posiciona os nós matematicamente.
 
+/**
+ * Um dia da trilha. `refs` é o jsonb de reading_plan_days:
+ * [{ book: 'gn', chapters: [1,2,3] }, ...]
+ */
+export type DiaDoPlano = {
+    id: string
+    day_number: number
+    description?: string | null
+    plan_id?: string | null
+    refs: { book: string; chapters: number[] }[]
+}
+
 export default function MapTrail({
     days,
     activeDay,
     completedDays
 }: {
-    days: any[],
+    days: DiaDoPlano[],
     activeDay: number,
     completedDays: Set<number>
 }) {

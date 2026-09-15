@@ -37,7 +37,14 @@ export async function searchVersesByTerm(term: string): Promise<SearchResult[]> 
     }
 
     // Flatten data
-    return data.map((item: any) => ({
+    type LinhaDeVersiculo = {
+        chapter: number
+        verse: number
+        text: string
+        bible_books: { slug: string; name: string }
+    }
+
+    return (data as unknown as LinhaDeVersiculo[]).map((item) => ({
         book_slug: item.bible_books.slug,
         book_name: item.bible_books.name,
         chapter: item.chapter,
