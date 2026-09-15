@@ -105,6 +105,20 @@ export const getChapter = cache(async (bookSlug: string, chapter: number, versio
         throw new Error('Livro não encontrado')
     }
 
+    // `bible_books` é canônico em português e o slug nunca muda (o resto do
+    // app guarda book_slug como texto). O nome no idioma da versão vive à
+    // parte, então ler a KJV mostra "Genesis" sem renomear nada.
+    const { data: nomeLocal } = await supabase
+        .from('bible_book_names')
+        .select('name')
+        .eq('book_id', book.id)
+        .eq('language', version.language)
+        .maybeSingle()
+
+    const livro: BibleBook = nomeLocal?.name
+        ? { ...(book as BibleBook), name: nomeLocal.name }
+        : (book as BibleBook)
+
     // 3. Pegar Versículos
     const { data: verses, error: verseError } = await supabase
         .from('bible_verses')
@@ -120,7 +134,7 @@ export const getChapter = cache(async (bookSlug: string, chapter: number, versio
     const prevChapter = await getPrevNav(supabase, book, chapter)
 
     return {
-        book,
+        book: livro,
         chapter,
         verses: verses as BibleVerse[],
         version: version as unknown as BibleVersion,

@@ -1,9 +1,11 @@
-import { getChapter } from '@/services/bibleService'
+import { getChapter, listVersions } from '@/services/bibleService'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import InteractiveVerse from '@/components/bible/InteractiveVerse'
 import ChapterComplete from '@/components/gamification/ChapterComplete'
 import DiscussaoAncorada from '@/components/discussion/DiscussaoAncorada'
+import VersionPicker from '@/components/bible/VersionPicker'
+import { getVersaoPreferida } from '@/actions/bible-version'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,15 +16,28 @@ type PageProps = {
         book: string;
         chapter: string
     }>
+    searchParams: Promise<{ v?: string }>
 }
 
-export default async function ChapterPage({ params }: PageProps) {
+export default async function ChapterPage({ params, searchParams }: PageProps) {
     // --- A CORREÇÃO ESTÁ AQUI ---
     // No Next.js 15, você OBRIGATORIAMENTE precisa dar await em params
     const { book, chapter } = await params
+    const { v } = await searchParams
+
+    // Precedência da versão: o que a URL pede > a preferência salva do
+    // usuário > o padrão do catálogo (menor sort_order). A URL ganha para
+    // que um link compartilhado abra na versão que quem compartilhou viu.
+    const preferida = v ?? (await getVersaoPreferida()) ?? undefined
 
     // Agora as variáveis book e chapter têm valor real, e não 'undefined'
-    const data = await getChapter(book, parseInt(chapter))
+    const [data, versoes] = await Promise.all([
+        getChapter(book, parseInt(chapter), preferida),
+        listVersions(),
+    ])
+
+    // Sem isto, pular de capítulo devolveria o leitor para a versão padrão.
+    const sufixoVersao = v ? `?v=${v}` : ''
 
     return (
         <div className="max-w-2xl mx-auto pb-20">
@@ -32,15 +47,16 @@ export default async function ChapterPage({ params }: PageProps) {
                     {data.book.name} <span className="text-amber-600">{data.chapter}</span>
                 </h1>
 
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
+                    <VersionPicker versoes={versoes} atual={data.version} />
                     <Link
-                        href={data.prev ? `/leitura/${data.prev.bookSlug}/${data.prev.chapter}` : '#'}
+                        href={data.prev ? `/leitura/${data.prev.bookSlug}/${data.prev.chapter}${sufixoVersao}` : '#'}
                         className={`p-2 rounded-full hover:bg-stone-200 transition ${!data.prev && 'opacity-30 pointer-events-none'}`}
                     >
                         <ChevronLeft size={20} />
                     </Link>
                     <Link
-                        href={data.next ? `/leitura/${data.next.bookSlug}/${data.next.chapter}` : '#'}
+                        href={data.next ? `/leitura/${data.next.bookSlug}/${data.next.chapter}${sufixoVersao}` : '#'}
                         className={`p-2 rounded-full hover:bg-stone-200 transition ${!data.next && 'opacity-30 pointer-events-none'}`}
                     >
                         <ChevronRight size={20} />
@@ -77,7 +93,7 @@ export default async function ChapterPage({ params }: PageProps) {
             <ChapterComplete
                 bookSlug={book}
                 chapter={parseInt(chapter)}
-                nextUrl={data.next ? `/leitura/${data.next.bookSlug}/${data.next.chapter}` : null}
+                nextUrl={data.next ? `/leitura/${data.next.bookSlug}/${data.next.chapter}${sufixoVersao}` : null}
             />
 
             {/* Crédito da tradução.
@@ -118,7 +134,7 @@ export default async function ChapterPage({ params }: PageProps) {
             {/* Botão Próximo Gigante */}
             {data.next && (
                 <Link
-                    href={`/leitura/${data.next.bookSlug}/${data.next.chapter}`}
+                    href={`/leitura/${data.next.bookSlug}/${data.next.chapter}${sufixoVersao}`}
                     className="mt-12 block w-full bg-stone-900 text-amber-500 py-4 rounded-xl text-center font-bold hover:bg-stone-800 transition shadow-lg"
                 >
                     Próximo Capítulo →
