@@ -265,7 +265,34 @@ export async function markAnswered(discussionId: string, replyId: string) {
     return { success: true }
 }
 
-/** Publica um estudo privado no acervo público, virando discussão. */
+/** Referência canônica de um estudo no acervo. */
+function refDoEstudo(studyId: string) {
+    return `study-${studyId}`
+}
+
+/** Já existe uma publicação deste estudo no acervo? */
+export async function estudoPublicado(studyId: string): Promise<string | null> {
+    const supabase = await createClient()
+
+    const { data } = await supabase
+        .from('discussions')
+        .select('id')
+        .eq('anchor_type', 'study')
+        .eq('anchor_ref', refDoEstudo(studyId))
+        .is('deleted_at', null)
+        .maybeSingle()
+
+    return data?.id ?? null
+}
+
+/**
+ * Publica um estudo privado no acervo público, virando discussão.
+ *
+ * É o elo entre estudar e conversar: a pessoa já escreve aqui, então
+ * publicar é um clique e não "escrever de novo em outro lugar". Vai para o
+ * acervo (`tribe_id = null`), não para a tribo — o acervo público recebe
+ * apenas estudos publicados deliberadamente.
+ */
 export async function publishStudy(studyId: string) {
     const { supabase, user } = await requireUser()
 
@@ -274,17 +301,44 @@ export async function publishStudy(studyId: string) {
         .select('id, title, content')
         .eq('id', studyId)
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
     if (!study) return { success: false, message: 'Estudo não encontrado.' }
-    if (!study.content?.trim()) return { success: false, message: 'Estudo vazio.' }
+
+    const corpo = study.content?.trim() ?? ''
+    const titulo = study.title?.trim() ?? ''
+
+    if (!corpo) return { success: false, message: 'Escreva o estudo antes de publicar.' }
+
+    // Os limites são checks do banco (title 3..160, body 1..20000). Sem
+    // validar aqui, um estudo longo falharia com erro cru do Postgres depois
+    // de o usuário já ter confirmado a publicação.
+    if (titulo.length < 3) {
+        return { success: false, message: 'Dê um título de ao menos 3 letras ao estudo.' }
+    }
+    if (titulo.length > 160) {
+        return { success: false, message: 'O título tem mais de 160 caracteres. Encurte antes de publicar.' }
+    }
+    if (corpo.length > 20000) {
+        return {
+            success: false,
+            message: `O estudo tem ${corpo.length.toLocaleString('pt-BR')} caracteres; o limite do acervo é 20.000.`,
+        }
+    }
+
+    // Publicar duas vezes criaria duas discussões para o mesmo estudo, cada
+    // uma com suas respostas, e nenhuma delas seria "a" discussão.
+    const jaPublicado = await estudoPublicado(study.id)
+    if (jaPublicado) {
+        return { success: false, message: 'Este estudo já está no acervo.', id: jaPublicado }
+    }
 
     return createDiscussion({
         tribeId: null,
         anchorType: 'study',
-        anchorRef: `study-${study.id}`,
-        title: study.title,
-        body: study.content,
+        anchorRef: refDoEstudo(study.id),
+        title: titulo,
+        body: corpo,
     })
 }
 

@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react'
 import { saveStudy, deleteStudy, getStudy } from '@/actions/study'
+import { publishStudy } from '@/actions/discussion'
 import BibleSearchSidebar from '@/components/study/BibleSearchSidebar'
 import StudioTour from '@/components/study/StudioTour'
 import QuickReader from '@/components/study/QuickReader'
-import { Save, ChevronLeft, Loader2, HelpCircle, Trash2, BookOpen, Search, LogOut } from 'lucide-react'
+import { Save, ChevronLeft, Loader2, HelpCircle, Trash2, BookOpen, Search, LogOut, Share2 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
@@ -17,6 +18,7 @@ export default function NewStudyPage() {
     const [saving, setSaving] = useState(false)
     const [loading, setLoading] = useState(false)
     const [deleting, setDeleting] = useState(false)
+    const [publishing, setPublishing] = useState(false)
     const [showTour, setShowTour] = useState(false)
 
     // Layout States - Desktop: True por padrão (50/25/25)
@@ -81,6 +83,39 @@ export default function NewStudyPage() {
             return
         }
         router.push('/estudos')
+    }
+
+    // Publicar leva o estudo para o acervo público. Salva antes: publicar uma
+    // versão antiga do texto que está na tela seria pior do que não publicar.
+    const handlePublish = async () => {
+        if (!id) {
+            alert('Salve o estudo antes de publicar.')
+            return
+        }
+        if (!confirm('Publicar este estudo no acervo público? Outras pessoas poderão ler e responder.')) return
+
+        setPublishing(true)
+        const salvo = await saveStudy(id, title, content)
+        if (!salvo?.success) {
+            setPublishing(false)
+            alert(salvo?.message ?? 'Não foi possível salvar antes de publicar.')
+            return
+        }
+
+        const r = await publishStudy(id)
+        setPublishing(false)
+
+        if (!r.success) {
+            // Se já está no acervo, a função devolve o id da discussão — levar
+            // para lá é mais útil do que só dizer que já existe.
+            if (r.id) {
+                router.push(`/discussao/${r.id}`)
+                return
+            }
+            alert(r.message ?? 'Não foi possível publicar.')
+            return
+        }
+        router.push(`/discussao/${r.id}`)
     }
 
     const handleDelete = async () => {
@@ -150,6 +185,16 @@ export default function NewStudyPage() {
                         <div className="w-px h-6 bg-stone-200 mx-2 hidden md:block"></div>
 
                         <button onClick={() => setShowTour(true)} className="hidden md:block p-2 text-stone-400 hover:text-amber-600"><HelpCircle size={20} /></button>
+                        {id && (
+                            <button
+                                onClick={handlePublish}
+                                disabled={publishing}
+                                title="Publicar no acervo público"
+                                className="p-2 text-stone-400 hover:text-amber-600 disabled:opacity-40"
+                            >
+                                {publishing ? <Loader2 size={20} className="animate-spin" /> : <Share2 size={20} />}
+                            </button>
+                        )}
                         {id && <button onClick={handleDelete} className="hidden md:block p-2 text-red-400 hover:bg-red-50 rounded"><Trash2 size={20} /></button>}
 
                         <button onClick={handleSave} disabled={saving} className="bg-stone-900 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-stone-800">
