@@ -39,7 +39,7 @@ export default function ChapterVerses({ versiculosDoServidor, bookSlug, chapter,
                     {offline ? ' — sem conexão agora' : ''}.
                 </p>
                 {doDexie.map((v) => (
-                    <p key={v.id} className="text-lg font-serif leading-relaxed text-stone-700 md:text-xl">
+                    <p key={v.id} className="texto-biblico font-serif leading-relaxed text-stone-700">
                         <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded text-xs font-sans font-bold text-stone-400">
                             {v.verse}
                         </span>

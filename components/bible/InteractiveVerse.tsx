@@ -90,7 +90,7 @@ export default function InteractiveVerse({
     return (
         <div className={`relative mb-6 p-2 rounded-lg transition-colors ${hasNote ? 'bg-amber-50/50 border-l-2 border-amber-300' : 'hover:bg-stone-50'}`}>
 
-            <p className="text-lg md:text-xl font-serif leading-relaxed text-stone-700">
+            <p className="texto-biblico font-serif leading-relaxed text-stone-700">
                 <button
                     onClick={() => setShowNoteInput(!showNoteInput)}
                     className="mr-2 inline-flex items-center justify-center w-6 h-6 rounded text-xs font-sans font-bold text-stone-400 hover:text-amber-600 hover:bg-amber-100 transition-colors"
