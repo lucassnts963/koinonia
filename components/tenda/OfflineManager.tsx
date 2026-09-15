@@ -1,31 +1,39 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { db } from '@/lib/db' // Seu arquivo Dexie
+import { db, type OfflineVerse } from '@/lib/db' // Seu arquivo Dexie
 import { CloudDownload, CheckCircle, Trash2, Loader2, WifiOff } from 'lucide-react'
 
 // URL da Bíblia (Mesma do Seed)
-const BIBLE_URL = 'https://raw.githubusercontent.com/thiagobodruk/bible/master/json/pt_acf.json'
+// A Bíblia Livre (CC BY 3.0 BR). Era pt_acf.json — a Almeida Corrigida Fiel,
+// da Sociedade Bíblica Trinitariana — que saiu do seed do servidor por
+// licença mas continuava sendo baixada para o dispositivo do usuário por
+// aqui. Mesma fonte que scripts/seed-bible.js usa para 'blivre'.
+const BIBLE_URL = 'https://raw.githubusercontent.com/Everson33rj/bibialivrejson/main/biblialivre.json'
+const VERSION_SLUG = 'blivre'
 
 export default function OfflineManager() {
     const [status, setStatus] = useState<'checking' | 'ready' | 'empty' | 'downloading'>('checking')
     const [count, setCount] = useState(0)
 
-    // 1. Ao carregar, verifica se já tem dados no Dexie
-    useEffect(() => {
-        checkStatus()
-    }, [])
-
     async function checkStatus() {
         try {
             const c = await db.verses.count()
             setCount(c)
-            setStatus(c > 30000 ? 'ready' : 'empty') // 31102 versículos na ACF
+            setStatus(c > 30000 ? 'ready' : 'empty') // 31102 versículos na Bíblia Livre
         } catch (e) {
             console.error(e)
             setStatus('empty')
         }
     }
+
+    // 1. Ao carregar, verifica se já tem dados no Dexie.
+    // O efeito vem depois de checkStatus pelo mesmo motivo do QuickReader:
+    // não depender de hoisting de declaração de função.
+    useEffect(() => {
+        checkStatus()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     // 2. Lógica de Download e Processamento
     async function handleDownload() {
@@ -35,26 +43,27 @@ export default function OfflineManager() {
             const res = await fetch(BIBLE_URL)
             const data = await res.json()
 
-            // B. Transformar JSON aninhado em Array plano para o Banco
-            // Formato esperado pelo Dexie (conforme seu lib/db.ts):
-            // { version_slug: 'acf', book_slug: 'gn', chapter: 1, verse: 1, text: '...' }
+            // B. Transformar JSON aninhado em Array plano para o Banco.
+            // O arquivo da Bíblia Livre traz um cabeçalho de metadados no
+            // índice 0 e depois os 66 livros, com chaves em português.
+            type LivroDoArquivo = { nome?: string; abrev?: string; capitulos?: string[][] }
 
-            const versesToSave: any[] = []
-            let bookCounter = 1
+            const versesToSave: OfflineVerse[] = []
 
-            for (const book of data) {
-                book.chapters.forEach((chapterContent: string[], chapterIndex: number) => {
+            for (const book of (data as LivroDoArquivo[])) {
+                if (!Array.isArray(book.capitulos) || !book.abrev) continue
+
+                book.capitulos.forEach((chapterContent, chapterIndex) => {
                     chapterContent.forEach((verseText, verseIndex) => {
                         versesToSave.push({
-                            version_slug: 'acf', // Fixo por enquanto
-                            book_slug: book.abbrev,
+                            version_slug: VERSION_SLUG,
+                            book_slug: book.abrev as string,
                             chapter: chapterIndex + 1,
                             verse: verseIndex + 1,
                             text: verseText
                         })
                     })
                 })
-                bookCounter++
             }
 
             // C. Salvar no IndexedDB (Bulk Add é rápido)
