@@ -9,6 +9,8 @@ import QuickReader from '@/components/study/QuickReader'
 import { Save, ChevronLeft, Loader2, HelpCircle, Trash2, BookOpen, Search, LogOut, Share2 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import BotaoOuvir from '@/components/audio/BotaoOuvir'
+import { paraTextoFalavel } from '@/lib/texto-plano'
 
 export default function NewStudyPage() {
     const [title, setTitle] = useState('')
@@ -183,6 +185,8 @@ export default function NewStudyPage() {
                         </button>
 
                         <div className="w-px h-6 bg-stone-200 mx-2 hidden md:block"></div>
+
+                        <BotaoOuvir texto={paraTextoFalavel(content)} compacto rotulo="Ouvir estudo" />
 
                         <button onClick={() => setShowTour(true)} className="hidden md:block p-2 text-stone-400 hover:text-amber-600"><HelpCircle size={20} /></button>
                         {id && (

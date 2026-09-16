@@ -7,6 +7,7 @@ import { searchVersesByTerm, type SearchResult } from '@/actions/bible'
 import { Loader2, Book, X, Save, Search, ChevronRight, MessageSquare } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import Link from 'next/link'
+import BotaoOuvir from '@/components/audio/BotaoOuvir'
 
 export default function InteractiveVerse({
     text,
@@ -98,6 +99,8 @@ export default function InteractiveVerse({
                     {verseNumber}
                     {hasNote && <span className="absolute w-1.5 h-1.5 bg-amber-500 rounded-full top-0 right-0"></span>}
                 </button>
+
+                <BotaoOuvir texto={text} compacto />{' '}
 
                 {words.map((word, i) => {
                     const clean = word.replace(/[.,;!?()"]/g, '')
