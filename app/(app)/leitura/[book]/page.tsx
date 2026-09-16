@@ -1,15 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { CheckCircle2, BookOpen } from 'lucide-react'
-import { getBooks } from '@/services/bibleService' // Você vai precisar atualizar isso pra retornar cap!
-
-// Como getBooks só retorna nomes, vamos precisar de uma função rápida pra saber quantos capítulos cada livro tem
-// MOCK para MVP (Ideal: ter isso no banco 'bible_books.chapters_count')
-const getChapterCount = (slug: string) => {
-    // Mapa simplificado. Em produção, use o DB.
-    const counts: Record<string, number> = { 'gn': 50, 'ex': 40, 'mt': 28, 'ap': 22, 'jo': 21, 'rm': 16 }
-    return counts[slug.toLowerCase()] || 20 // Default fallback
-}
+import { CheckCircle2 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,7 +26,18 @@ export default async function BookChaptersPage({ params }: { params: Promise<{ b
         .eq('book_slug', book)
 
     const readChapters = new Set(history?.map(h => h.chapter))
-    const totalChapters = getChapterCount(bookData.slug)
+
+    // Contagem real, não um mapa fixo de 6 livros com fallback em 20 — era por
+    // isso que Salmos (150 caps) e qualquer livro fora do mapa travavam em 20.
+    const { data: ultimoCapitulo } = await supabase
+        .from('bible_verses')
+        .select('chapter')
+        .eq('book_id', bookData.id)
+        .order('chapter', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+    const totalChapters = ultimoCapitulo?.chapter ?? 1
 
     return (
         <div className="space-y-8 pb-20">

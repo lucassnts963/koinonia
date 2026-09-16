@@ -48,6 +48,12 @@ export function falar(
     opcoes: { voiceURI?: string; rate?: number },
     eventos: { aoTerminar: () => void; aoErrar?: (erro: string) => void }
 ): ControleDeFala {
+    // Sem isto, um pause() anterior (deste texto ou de qualquer outro botão
+    // na página) deixa o motor inteiro num estado pausado global: speak()
+    // novo é enfileirado e nunca toca até um resume() — o "áudio não sai"
+    // relatado ao trocar de versículo depois de pausar.
+    window.speechSynthesis.cancel()
+
     const frases = dividirEmFrases(texto)
     const vozes = vozesDisponiveis()
     const voz =
@@ -82,7 +88,10 @@ export function falar(
         window.speechSynthesis.speak(utterance)
     }
 
-    falarProxima()
+    // Chrome trata cancel() como assíncrono por baixo dos panos: falar()
+    // logo em seguida, no mesmo tick, às vezes some sem erro nenhum. Um
+    // delay mínimo dá tempo do motor terminar de cancelar de verdade.
+    setTimeout(falarProxima, 50)
 
     return {
         pausar: () => window.speechSynthesis.pause(),
