@@ -58,7 +58,9 @@ export default function PropostaVerbeteForm({ termoInicial }: { termoInicial?: s
             </div>
 
             <div>
-                <label className="block text-xs font-bold text-stone-500 mb-1">Definição</label>
+                <label className="block text-xs font-bold text-stone-500 mb-1">
+                    Definição <span className="font-normal text-stone-400">(aceita markdown: **negrito**, listas, etc.)</span>
+                </label>
                 <textarea
                     value={definition}
                     onChange={(e) => setDefinition(e.target.value)}
