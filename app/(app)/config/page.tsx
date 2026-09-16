@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/actions/auth'
 import OfflineManager from '@/components/tenda/OfflineManager'
 import AparenciaLeitura from '@/components/tenda/AparenciaLeitura'
+import ConfiguracaoAudio from '@/components/tenda/ConfiguracaoAudio'
 import { Settings, User, LogOut } from 'lucide-react'
 
 // Server Action temporária para o botão de sair
@@ -59,6 +60,11 @@ export default async function TendaPage() {
             {/* 3. Aparência da Leitura — real agora, não decorativo */}
             <section>
                 <AparenciaLeitura />
+            </section>
+
+            {/* 3b. Leitura em áudio */}
+            <section>
+                <ConfiguracaoAudio />
             </section>
 
             {/* 4. Zona de Perigo / Logout */}

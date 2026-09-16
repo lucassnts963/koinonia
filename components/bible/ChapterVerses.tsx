@@ -2,6 +2,7 @@
 
 import { WifiOff } from 'lucide-react'
 import InteractiveVerse from '@/components/bible/InteractiveVerse'
+import BotaoOuvir from '@/components/audio/BotaoOuvir'
 import { useOfflineChapter, useEstaOffline } from '@/hooks/useOfflineBible'
 import type { BibleVerse } from '@/services/bibleService'
 
@@ -38,6 +39,9 @@ export default function ChapterVerses({ versiculosDoServidor, bookSlug, chapter,
                     <WifiOff size={13} /> Lendo a cópia baixada no seu aparelho
                     {offline ? ' — sem conexão agora' : ''}.
                 </p>
+                <div className="mb-3">
+                    <BotaoOuvir texto={doDexie.map((v) => v.text).join(' ')} rotulo="Ouvir capítulo" />
+                </div>
                 {doDexie.map((v) => (
                     <p key={v.id} className="texto-biblico font-serif leading-relaxed text-stone-700">
                         <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded text-xs font-sans font-bold text-stone-400">
@@ -62,6 +66,9 @@ export default function ChapterVerses({ versiculosDoServidor, bookSlug, chapter,
 
     return (
         <div className="space-y-1">
+            <div className="mb-3">
+                <BotaoOuvir texto={versiculosDoServidor.map((v) => v.text).join(' ')} rotulo="Ouvir capítulo" />
+            </div>
             {versiculosDoServidor.map((verse) => (
                 <InteractiveVerse
                     key={verse.id}
