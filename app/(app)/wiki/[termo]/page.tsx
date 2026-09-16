@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import ReactMarkdown from 'react-markdown'
 import { getDefinition } from '@/actions/dictionary'
 import { searchVersesByTerm } from '@/actions/bible'
 import { ArrowLeft, ChevronRight, Sparkles } from 'lucide-react'
@@ -40,7 +41,9 @@ export default async function VerbetePage({
                     {verbete.aliases.length > 0 && (
                         <p className="text-xs text-stone-400">Também conhecido como: {verbete.aliases.join(', ')}</p>
                     )}
-                    <p className="text-stone-700 whitespace-pre-wrap">{verbete.definition}</p>
+                    <div className="prose prose-amber prose-p:my-2 prose-headings:my-2 max-w-none text-stone-700">
+                        <ReactMarkdown>{verbete.definition}</ReactMarkdown>
+                    </div>
                 </div>
             ) : (
                 <div className="rounded-xl border border-stone-200 bg-stone-50 p-6 text-center space-y-3">
